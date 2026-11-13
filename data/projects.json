@@ -1,0 +1,147 @@
+[
+  {
+    "id": "wiimo",
+    "slug": "wiimo",
+    "title": "Wiimo",
+    "tagline": "AI voice ordering agent live in Gulf restaurants.",
+    "summary": "Wiimo is a production AI voice ordering system deployed across restaurant chains in the Gulf. Customers place orders by speaking naturally — Wiimo handles speech recognition, intent parsing, upselling, and POS integration end-to-end.",
+    "status": "production",
+    "featured": true,
+    "github": null,
+    "live": null,
+    "video": null,
+    "screenshot": "/images/projects/wiimo.png",
+    "tech": ["React Native", "Node.js", "Python", "OpenAI Whisper", "GPT-4o", "WebSockets", "PostgreSQL", "Redis", "Expo"],
+    "outcome": "Live in production across Gulf restaurant chains, handling real customer orders daily.",
+    "case_study": {
+      "problem": "Restaurant chains in the Gulf needed a faster, more accurate ordering experience that could handle Arabic and English speakers in noisy environments, without hiring more staff.",
+      "approach": "Built a mobile-first voice ordering app that uses Whisper for speech-to-text, a custom intent-parsing layer on top of GPT-4o, and a real-time WebSocket connection to the restaurant POS system.",
+      "architecture": "Mobile client (React Native/Expo) → WebSocket server → STT pipeline (Whisper) → Intent parser (GPT-4o + custom prompt chain) → Order validator (Zod schemas) → POS webhook → Confirmation back to client.",
+      "key_decisions": [
+        "Chose Whisper over cloud STT for latency and cost — self-hosted on a GPU instance.",
+        "Built a custom prompt chain rather than fine-tuning to stay flexible as the menu changes.",
+        "WebSockets over HTTP polling for sub-500ms order confirmation feedback."
+      ],
+      "result": "Deployed live in the Gulf market. Handles multi-item orders, modifications, and upsells in real time.",
+      "stack_detail": "React Native + Expo (mobile), Node.js + Express (API), Python (ML pipeline), PostgreSQL (orders), Redis (session/cache), OpenAI Whisper + GPT-4o (AI layer), deployed on AWS EC2 + RDS."
+    },
+    "repoName": null,
+    "tags": ["AI", "Voice", "Mobile", "Production", "LLM"]
+  },
+  {
+    "id": "lexai",
+    "slug": "lexai",
+    "title": "LexAI",
+    "tagline": "Legal document analysis for people without lawyers.",
+    "summary": "LexAI lets users upload legal documents — contracts, NDAs, lease agreements — and get plain-English explanations of what they're signing, flagged risk clauses, and suggested questions to ask a lawyer.",
+    "status": "shipped",
+    "featured": true,
+    "github": null,
+    "live": null,
+    "video": null,
+    "screenshot": "/images/projects/lexai.png",
+    "tech": ["Next.js", "TypeScript", "Python", "LangChain", "GPT-4o", "Pinecone", "PostgreSQL", "Tailwind CSS"],
+    "outcome": "Reduced average document review time from hours to minutes for early users.",
+    "case_study": {
+      "problem": "Most people sign legal documents without understanding what's in them. Legal help is expensive and slow.",
+      "approach": "Built a RAG pipeline that chunks legal documents, embeds them into a vector store, and uses a custom prompt chain to extract, explain, and flag key clauses in plain English.",
+      "architecture": "Next.js frontend → Document upload API → Python chunking + embedding pipeline → Pinecone vector store → LangChain retrieval chain → GPT-4o summarization → Streamed response to UI.",
+      "key_decisions": [
+        "Used streaming responses so users see results immediately — legal docs are long.",
+        "Built a custom clause classifier to reliably detect liability, termination, and IP clauses.",
+        "Chose Pinecone over pgvector for this use case due to metadata filtering needs."
+      ],
+      "result": "TODO: Add specific metrics from user testing.",
+      "stack_detail": "Next.js 14 (frontend + API routes), Python FastAPI (ML service), LangChain, OpenAI GPT-4o, Pinecone, PostgreSQL, deployed on Vercel + Fly.io."
+    },
+    "repoName": null,
+    "tags": ["AI", "LegalTech", "RAG", "LLM", "Web"]
+  },
+  {
+    "id": "dumbdsa",
+    "slug": "dumbdsa",
+    "title": "DumbDSA",
+    "tagline": "DSA learning with a visualization engine that actually clicks.",
+    "summary": "DumbDSA is an interactive learning platform for data structures and algorithms. It has a custom visualization engine that animates every step of an algorithm so you understand what's happening — not just memorize it.",
+    "status": "shipped",
+    "featured": true,
+    "github": "https://github.com/NumanFaisal/dumbdsa",
+    "live": null,
+    "video": null,
+    "screenshot": "/images/projects/dumbdsa.png",
+    "tech": ["Next.js", "TypeScript", "React", "Tailwind CSS", "Framer Motion", "D3.js"],
+    "outcome": "Built a step-through visualization engine for 15+ algorithms with real-time code tracing.",
+    "case_study": {
+      "problem": "Most DSA resources either show you code or show you a static diagram. Neither actually teaches you why an algorithm works.",
+      "approach": "Built a custom visualization engine in React + D3.js that animates every step of an algorithm alongside the code, with breakpoints and a speed slider.",
+      "architecture": "Next.js app with a custom algorithm runner that emits step events → visualization engine subscribes to events → D3.js renders animated state changes → code highlighter syncs with current step.",
+      "key_decisions": [
+        "Custom event-driven architecture so algorithm logic stays pure and testable.",
+        "D3.js over raw SVG for the visualization layer — better transitions and data binding.",
+        "Step-by-step replay so learners can go back and understand what changed."
+      ],
+      "result": "Covers 15+ algorithms across sorting, trees, graphs, and dynamic programming. Used by peers for interview prep.",
+      "stack_detail": "Next.js, TypeScript, React, D3.js, Framer Motion, Tailwind CSS."
+    },
+    "repoName": "dumbdsa",
+    "tags": ["Education", "Visualization", "DSA", "Web"]
+  },
+  {
+    "id": "shilpsetu",
+    "slug": "shilpsetu",
+    "title": "ShilpSetu",
+    "tagline": "Hackathon platform connecting artisans to digital markets.",
+    "summary": "ShilpSetu is a hackathon-winning platform that bridges the gap between traditional Indian artisans and digital commerce — giving craftspeople a simple storefront without needing tech skills.",
+    "status": "hackathon",
+    "featured": true,
+    "github": "https://github.com/NumanFaisal/shilpsetu",
+    "live": null,
+    "video": null,
+    "screenshot": "/images/projects/shilpsetu.png",
+    "tech": ["Next.js", "TypeScript", "Node.js", "PostgreSQL", "Tailwind CSS", "Cloudinary"],
+    "outcome": "Won a regional hackathon. Designed for artisans with low digital literacy — zero onboarding friction.",
+    "case_study": {
+      "problem": "Indian artisans create world-class handmade goods but have almost no way to sell them online — most e-commerce platforms assume tech literacy they don't have.",
+      "approach": "Built an ultra-simplified storefront creator with WhatsApp-first order flow, QR code sharing, and Hindi/English bilingual support.",
+      "architecture": "Next.js frontend + API routes → PostgreSQL (artisan profiles, products) → Cloudinary (image uploads) → WhatsApp Business API (order notifications) → QR code generator for offline sharing.",
+      "key_decisions": [
+        "WhatsApp over email for order notifications — higher open rates in target demographic.",
+        "QR code as the primary sharing mechanism — artisans can print and share at markets.",
+        "Minimal form fields — artisan onboarding in under 3 minutes."
+      ],
+      "result": "Won regional hackathon. Designed with real artisan feedback during the event.",
+      "stack_detail": "Next.js, TypeScript, PostgreSQL, Cloudinary, WhatsApp Business API, Tailwind CSS."
+    },
+    "repoName": "shilpsetu",
+    "tags": ["Social Impact", "E-commerce", "Hackathon", "Web"]
+  },
+  {
+    "id": "fuelroute",
+    "slug": "fuelroute",
+    "title": "FuelRoute",
+    "tagline": "Smart CNG and EV station finder with live route planning.",
+    "summary": "FuelRoute helps CNG and EV vehicle owners find nearby stations, plan routes with refuelling stops, and see live station availability — solving a real daily pain point for eco-vehicle owners in India.",
+    "status": "shipped",
+    "featured": true,
+    "github": "https://github.com/NumanFaisal/fuelroute",
+    "live": null,
+    "video": null,
+    "screenshot": "/images/projects/fuelroute.png",
+    "tech": ["React", "TypeScript", "Node.js", "Google Maps API", "MongoDB", "Express", "Tailwind CSS"],
+    "outcome": "Real-time station finder with route planning for CNG and EV vehicles across India.",
+    "case_study": {
+      "problem": "CNG and EV drivers in India have no reliable way to plan routes with guaranteed refuelling stops — Google Maps doesn't show station availability.",
+      "approach": "Built a route planner that layers CNG/EV station data on top of Google Maps directions, with waypoint optimization and crowdsourced availability updates.",
+      "architecture": "React frontend → Node.js/Express API → Google Maps Directions + Places API → MongoDB (station data, user reports) → real-time availability scoring algorithm.",
+      "key_decisions": [
+        "Crowdsourced availability — users report queue times and stock status.",
+        "Waypoint optimization algorithm to minimize detour distance for multi-stop routes.",
+        "Progressive Web App for offline map caching in areas with poor connectivity."
+      ],
+      "result": "TODO: Add user metrics after public launch.",
+      "stack_detail": "React, TypeScript, Node.js, Express, MongoDB, Google Maps API (Directions + Places), Tailwind CSS."
+    },
+    "repoName": "fuelroute",
+    "tags": ["Maps", "EV", "CNG", "Web", "PWA"]
+  }
+]

@@ -1,0 +1,53 @@
+[
+  {
+    "id": "creative-homme",
+    "company": "Creative Homme",
+    "role": "Trainee Software Engineer — Full Stack",
+    "type": "Full-time",
+    "start": "2026-01",
+    "end": null,
+    "current": true,
+    "location": "Remote",
+    "bullets": [
+      "Building and maintaining full-stack features across multiple client products using Next.js, TypeScript, and Node.js.",
+      "Collaborating closely with design and product teams to ship pixel-perfect, performant interfaces.",
+      "Contributing to internal tooling and developer experience improvements."
+    ],
+    "tech": ["Next.js", "TypeScript", "Node.js", "React", "Tailwind CSS"],
+    "learned": "How to thrive inside a fast-moving agency environment where clear communication is as important as clean code."
+  },
+  {
+    "id": "orbinger",
+    "company": "Orbinger India Pvt. Ltd.",
+    "role": "Full Stack Developer",
+    "type": "Full-time",
+    "start": "2025-08",
+    "end": "2026-01",
+    "current": false,
+    "location": "Remote",
+    "bullets": [
+      "Led full-stack development of Wiimo, an AI-powered voice ordering agent deployed live in Gulf restaurant chains.",
+      "Architected the backend service layer integrating speech-to-text, LLM intent parsing, and POS system webhooks.",
+      "Reduced order processing time by designing a low-latency voice pipeline that handles real-world accents and noisy environments."
+    ],
+    "tech": ["React Native", "Node.js", "Python", "OpenAI API", "WebSockets", "PostgreSQL", "Redis"],
+    "learned": "That building AI for real, non-technical users in production is 90% edge cases — and that's where the real engineering happens."
+  },
+  {
+    "id": "seeup-tech",
+    "company": "Seeup Tech",
+    "role": "Web Developer Intern",
+    "type": "Internship",
+    "start": "2024-06",
+    "end": "2024-09",
+    "current": false,
+    "location": "Remote",
+    "bullets": [
+      "Developed and deployed responsive web applications using React and Node.js for client projects.",
+      "Integrated third-party APIs and built custom RESTful endpoints consumed by mobile and web clients.",
+      "Participated in code reviews and learned production deployment workflows on AWS."
+    ],
+    "tech": ["React", "Node.js", "Express", "MongoDB", "AWS", "REST APIs"],
+    "learned": "The fundamentals of shipping real software — version control discipline, writing for the next developer, and how to ask the right questions."
+  }
+]

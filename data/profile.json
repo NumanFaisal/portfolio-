@@ -1,0 +1,32 @@
+{
+  "name": "Numan Faisal",
+  "title": "Full-Stack & AI Engineer",
+  "headline": "I build AI products that ship.",
+  "subheadline": "Currently powering production AI voice ordering for Gulf restaurants with Wiimo.",
+  "bio": "I'm a full-stack and AI engineer who cares deeply about shipping things that actually work in the real world. I've built everything from AI voice ordering agents handling live restaurant orders in the Gulf to interactive learning platforms — always with a bias toward clean code, fast iteration, and genuine user value. When I'm not coding, I'm probably thinking about how to make the next thing ship faster.",
+  "currently_building": "An AI voice ordering agent live in production across Gulf restaurants",
+  "open_to_work": true,
+  "location": "India",
+  "email": "numanfaisal980@gmail.com",
+  "github": "https://github.com/NumanFaisal",
+  "linkedin": "https://www.linkedin.com/in/numanfaisal/",
+  "cal_url": "[CAL_URL]",
+  "resume_pdf": "/resume.pdf",
+  "photo": "/images/numan.jpg",
+  "stats": [
+    { "value": 5, "label": "Projects shipped", "suffix": "+" },
+    { "value": 3, "label": "Years building", "suffix": "+" },
+    { "value": 1, "label": "Live AI product in Gulf market", "suffix": "" },
+    { "value": 100, "label": "Uptime on production", "suffix": "%" }
+  ],
+  "tech_logos": [
+    { "name": "Next.js", "icon": "nextjs" },
+    { "name": "React", "icon": "react" },
+    { "name": "TypeScript", "icon": "typescript" },
+    { "name": "Python", "icon": "python" },
+    { "name": "Node.js", "icon": "nodejs" },
+    { "name": "PostgreSQL", "icon": "postgresql" },
+    { "name": "Docker", "icon": "docker" },
+    { "name": "AWS", "icon": "aws" }
+  ]
+}
