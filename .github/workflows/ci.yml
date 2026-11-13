@@ -1,0 +1,35 @@
+name: CI + Deploy
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * *" # nightly at 2am UTC
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - run: npm run lint
+      - run: npx tsc --noEmit
+      - run: npm run build
+
+  deploy:
+    needs: ci
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Trigger Vercel deploy
+        run: |
+          curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}"
+
+      - name: Revalidate cache
+        run: |
+          curl -X POST "${{ secrets.NEXT_PUBLIC_SITE_URL }}/api/revalidate" \
+            -H "x-revalidate-secret: ${{ secrets.REVALIDATE_SECRET }}"

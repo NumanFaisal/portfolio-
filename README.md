@@ -1,36 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Numan Faisal — Portfolio
 
-## Getting Started
+Production-grade personal portfolio built with Next.js App Router, Tailwind CSS v4, React Three Fiber, GSAP, and Framer Motion.
 
-First, run the development server:
+## Stack
+
+- **Framework**: Next.js 15 (App Router) + TypeScript strict
+- **Styling**: Tailwind CSS v4 + CSS variables design tokens
+- **3D**: React Three Fiber + @react-three/drei
+- **Animation**: GSAP + ScrollTrigger, Framer Motion, Lenis
+- **Data validation**: Zod (build-time, fails build on invalid data)
+- **Email**: Resend
+- **Deployment**: Vercel
+
+## Setup
 
 ```bash
+# 1. Clone
+git clone https://github.com/NumanFaisal/portfolio
+cd portfolio
+
+# 2. Install
+npm install
+
+# 3. Environment variables
+cp .env.example .env.local
+# Fill in your values (see below)
+
+# 4. Run dev server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Environment Variables
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Required | Description |
+|---|---|---|
+| `GITHUB_TOKEN` | Optional | GitHub PAT for pinned repo sync |
+| `RESEND_API_KEY` | For prod | Resend API key for contact form |
+| `REVALIDATE_SECRET` | For prod | Random string to protect `/api/revalidate` |
+| `CONTACT_TO_EMAIL` | Optional | Email address to receive contact form submissions |
+| `NEXT_PUBLIC_SITE_URL` | For prod | Your deployed URL, e.g. `https://numanfaisal.dev` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How to Add a Project
 
-## Learn More
+1. Open `data/projects.json`
+2. Add a new object matching the `ProjectSchema` in `data/schemas/project.ts`
+3. Set `"featured": true` to show it in the bento grid (max 6 shown)
+4. Add a screenshot to `public/images/projects/your-project.png`
+5. Done — the site, sitemap, and resume page update automatically
 
-To learn more about Next.js, take a look at the following resources:
+## How to Add a Job
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Open `data/experience.json`
+2. Add a new object matching the `ExperienceSchema` in `data/schemas/experience.ts`
+3. Done — timeline, resume page, and PDF all update automatically
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Project Structure
 
-## Deploy on Vercel
+```
+app/                    # Next.js App Router routes
+  api/
+    contact/route.ts    # Contact form API (Resend)
+    og/route.tsx        # Dynamic OG image generation
+    revalidate/route.ts # On-demand ISR revalidation
+  projects/[slug]/      # Case study pages
+  resume/               # Online resume page
+  not-found.tsx         # Custom 404
+  layout.tsx            # Root layout + metadata
+  page.tsx              # Home page
+components/
+  layout/               # Nav, Footer
+  providers/            # ThemeProvider, LenisProvider
+  sections/             # Hero, ProofStrip, Projects, Experience, About, Skills, Education, Contact
+  three/                # HeroCanvas (React Three Fiber)
+  ui/                   # Button, Chip, Badge, SectionHeading, Toaster, CustomCursor
+data/
+  profile.json          # Personal info, stats, links
+  experience.json       # Work history
+  projects.json         # Project data
+  schemas/              # Zod schemas (validated at build time)
+lib/
+  utils.ts              # Helper functions
+public/
+  images/               # Project screenshots, photos
+.github/workflows/      # CI/CD pipeline
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment (Vercel)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Push to GitHub
+2. Import project in Vercel
+3. Set all environment variables in Vercel dashboard
+4. Deploy
+
+The GitHub Action (`.github/workflows/ci.yml`) runs lint, typecheck, and build on every push, then triggers a Vercel deploy hook and cache revalidation.
