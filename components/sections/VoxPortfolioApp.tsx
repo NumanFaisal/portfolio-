@@ -179,9 +179,9 @@ export function VoxPortfolioApp() {
           if (idx === 3 && !prefersReduced) {
             const track = sec.querySelector("[data-timeline-board]") as HTMLElement;
             if (track) {
-              const maxPan = isMobile ? 540 : 700;
-              const panX = -nextP * maxPan;
-              track.style.transform = `translate3d(${panX}px, 0, 0)`;
+              const totalPanels = chronologicalExp.length;
+              const panPercent = -nextP * ((totalPanels - 1) / totalPanels) * 100;
+              track.style.transform = `translate3d(${panPercent}%, 0, 0)`;
             }
           }
         }
@@ -224,7 +224,9 @@ export function VoxPortfolioApp() {
   };
 
   const wiimo = projectsData.find((p) => p.id === "wiimo") ?? projectsData[0];
-  const otherProjects = projectsData.filter((p) => p.id !== "wiimo");
+  const shilpsetu = projectsData.find((p) => p.id === "shilpsetu") ?? projectsData[1];
+  const lexai = projectsData.find((p) => p.id === "lexai") ?? projectsData[2];
+  const dumbdsa = projectsData.find((p) => p.id === "dumbdsa") ?? projectsData[3];
   const chronologicalExp = [...experienceData].reverse();
 
   return (
@@ -292,8 +294,11 @@ export function VoxPortfolioApp() {
 
             {/* Left Content Card */}
             <div
-              className="k relative z-10 max-w-[700px] w-[86vw] ml-[6vw] justify-self-start grid gap-3"
-              style={{ ["--a" as string]: 0.05, ["--b" as string]: 0.35 }}
+              className="relative z-10 max-w-[720px] w-[86vw] ml-[6vw] justify-self-start grid gap-3.5"
+              style={{
+                opacity: "calc(1 - clamp(0, (var(--p) - 0.55) / 0.35, 1))",
+                transform: "translateY(calc(clamp(0, (var(--p) - 0.55) / 0.35, 1) * -30px))",
+              }}
             >
               <div
                 className="chyron"
@@ -302,70 +307,127 @@ export function VoxPortfolioApp() {
                 PORTFOLIO · <b>2026</b>
               </div>
 
-              <h1 className="font-serif-display text-[clamp(32px,4.2vw,58px)] font-normal leading-[0.96] tracking-[-0.035em]">
+              <h1 className="font-serif-display text-[clamp(44px,6.8vw,86px)] font-normal leading-[0.92] tracking-[-0.03em]">
                 I build{" "}
                 <span className="hlOpen">AI products</span>
                 <br />
                 that ship.
               </h1>
 
-              <p className="max-w-[460px] text-[var(--color-ink-soft)] text-[clamp(14px,1.1vw,16px)] leading-[1.45]">
-                Currently powering <strong className="text-[var(--color-studio)]">Wiimo</strong>, a
+              <p className="max-w-[560px] text-[var(--color-ink-soft)] text-[clamp(16px,1.25vw,19px)] leading-[1.5]">
+                Currently powering <strong className="text-[var(--color-studio)] font-semibold">Wiimo</strong>, a
                 production AI voice ordering agent running live across restaurant chains in the Gulf
                 market.
               </p>
 
               {/* Verified Metrics Strip on Hero */}
-              <div className="flex items-center gap-5 py-1.5 border-y border-[var(--color-border)] max-w-sm my-0.5">
+              <div className="flex items-center gap-6 py-2 border-y border-[var(--color-border)] max-w-md my-0.5">
                 {profileData.stats.slice(0, 3).map((st) => (
                   <div key={st.label}>
-                    <div className="font-serif text-xl sm:text-2xl font-bold text-[var(--color-studio)] leading-none">
+                    <div className="font-serif-display text-2xl sm:text-3xl font-bold text-[var(--color-studio)] leading-none">
                       {st.value}{st.suffix}
                     </div>
-                    <div className="font-mono text-[9px] uppercase text-[var(--color-ink-soft)] mt-0.5">
+                    <div className="font-mono text-[9px] uppercase tracking-wider text-[var(--color-ink-soft)] mt-1">
                       {st.label}
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 pt-1">
+              <div className="flex flex-wrap items-center gap-4 pt-3">
                 <a
                   href="#shipped"
-                  className="bg-[var(--color-studio)] text-white px-4 py-2 rounded-[4px] font-semibold text-[13.5px] shadow-[0_6px_14px_-8px_rgba(239,59,45,0.45)] hover:-translate-y-0.5 transition-transform"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "10px",
+                    backgroundColor: "var(--color-studio)",
+                    color: "#ffffff",
+                    padding: "15px 32px",
+                    borderRadius: "4px",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    textDecoration: "none",
+                    boxShadow: "0 10px 25px -6px rgba(239, 59, 45, 0.45)",
+                    lineHeight: 1,
+                    cursor: "pointer",
+                  }}
+                  className="hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-6px_rgba(239,59,45,0.6)] transition-all"
                 >
-                  See my work ↓
+                  <span>See my work</span>
+                  <span className="text-white/80 font-bold text-[18px]">↓</span>
                 </a>
                 <a
                   href="#contact"
-                  className="bg-white text-[var(--color-ink)] border border-[rgba(17,17,17,0.14)] px-4 py-2 rounded-[4px] font-semibold text-[13.5px] shadow-[0_4px_12px_-6px_rgba(0,0,0,0.2)] hover:-translate-y-0.5 transition-transform"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "10px",
+                    backgroundColor: "#ffffff",
+                    color: "var(--color-ink)",
+                    padding: "15px 32px",
+                    borderRadius: "4px",
+                    border: "2px solid rgba(17, 17, 17, 0.25)",
+                    fontSize: "16px",
+                    fontWeight: 700,
+                    textDecoration: "none",
+                    boxShadow: "0 4px 16px -6px rgba(0, 0, 0, 0.16)",
+                    lineHeight: 1,
+                    cursor: "pointer",
+                  }}
+                  className="hover:-translate-y-0.5 hover:border-[var(--color-ink)] hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.22)] transition-all"
                 >
-                  Say hi
+                  <span>Say hi</span>
                 </a>
                 <Link
                   href="/resume"
-                  className="font-mono text-[11px] uppercase tracking-wider text-[var(--color-build)] hover:underline ml-1"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    backgroundColor: "transparent",
+                    color: "var(--color-ink)",
+                    padding: "14px 22px",
+                    borderRadius: "4px",
+                    border: "2px dashed rgba(17, 17, 17, 0.35)",
+                    fontFamily: "var(--font-geist-mono), monospace",
+                    fontSize: "12.5px",
+                    fontWeight: 700,
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    textDecoration: "none",
+                    lineHeight: 1,
+                    cursor: "pointer",
+                  }}
+                  className="hover:border-[var(--color-studio)] hover:text-[var(--color-studio)] hover:bg-[rgba(239,59,45,0.04)] transition-all"
                 >
-                  Resume PDF ↗
+                  <span>Resume PDF</span>
+                  <span className="text-[14px] font-bold">↗</span>
                 </Link>
               </div>
             </div>
 
             {/* Halftone Cutout Portrait */}
             <div
-              className="k absolute top-1/2 right-[6vw] -translate-y-1/2 w-[min(24vw,250px)] z-10"
-              style={{ ["--a" as string]: 0.1, ["--b" as string]: 0.45, ["--r" as string]: "3deg" }}
+              className="absolute top-1/2 right-[6vw] -translate-y-1/2 w-[min(28vw,300px)] z-10 hidden md:block"
+              style={{
+                opacity: "calc(1 - clamp(0, (var(--p) - 0.55) / 0.35, 1))",
+                transform: "translateY(calc(-50% + clamp(0, (var(--p) - 0.55) / 0.35, 1) * -30px)) rotate(2.5deg)",
+              }}
             >
               <div className="relative">
                 <div
                   className="tapeTop"
-                  style={{ ["--tw" as string]: "90px", ["--tr" as string]: "-3deg" }}
+                  style={{ ["--tw" as string]: "110px", ["--tr" as string]: "-3deg" }}
                   aria-hidden="true"
                 />
                 <img
                   src="/vox/cutout.webp"
                   alt="Numan Faisal"
-                  className="w-full h-auto drop-shadow-[0_16px_20px_rgba(0,0,0,0.2)]"
+                  className="w-full h-auto drop-shadow-[0_18px_24px_rgba(0,0,0,0.25)]"
                 />
               </div>
             </div>
@@ -379,7 +441,7 @@ export function VoxPortfolioApp() {
       </section>
 
       {/* =========================================================================
-          BEAT 1: CHAPTER 01 — SHIPPED (WIIMO)
+          BEAT 1: CHAPTER 01 — SHIPPED (WIIMO + SHILPSETU)
           ========================================================================= */}
       <section
         id="shipped"
@@ -403,48 +465,127 @@ export function VoxPortfolioApp() {
           </div>
 
           <div ref={(el) => { cameraRefs.current[1] = el; }} className="camera">
-            {/* Taped Document Card */}
-            <article className="doc k" style={{ ["--a" as string]: 0.04, ["--b" as string]: 0.22, ["--r" as string]: "-1.2deg" }}>
-              <div className="pin" aria-hidden="true" />
-              <div className="tapeTop" style={{ ["--tw" as string]: "110px", ["--tr" as string]: "1deg" }} aria-hidden="true" />
+            <div className="shippedGrid">
+              {/* Wiimo Card */}
+              <article className="shippedCard k" style={{ ["--a" as string]: 0.04, ["--b" as string]: 0.22, ["--r" as string]: "-1.2deg" }}>
+                <div className="pin" aria-hidden="true" />
+                <div className="tapeTop" style={{ ["--tw" as string]: "110px", ["--tr" as string]: "1deg" }} aria-hidden="true" />
 
-              <div className="docHead">
-                <span>CASE FILE: {wiimo.title.toUpperCase()}</span>
-                <span>STATUS: {wiimo.status.toUpperCase()}</span>
-                <span>MARKET: GULF REGION</span>
-              </div>
+                <div className="docHead">
+                  <span>CASE FILE: {wiimo.title.toUpperCase()}</span>
+                  <span>STATUS: {wiimo.status.toUpperCase()}</span>
+                  <span>MARKET: GULF REGION</span>
+                </div>
 
-              <div className="docTitle">
-                PRODUCTION AI VOICE ORDERING AGENT
-              </div>
+                <div className="docTitle">
+                  PRODUCTION AI VOICE ORDERING AGENT
+                </div>
 
-              {/* Visual Project Screenshot Preview */}
-              <div className="relative w-full aspect-[21/9] max-h-[140px] my-2 rounded-[3px] overflow-hidden border border-[var(--color-border)] shadow-sm">
-                <img
-                  src="/images/projects/wiimo.svg"
-                  alt="Wiimo system preview"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+                {/* Visual Project Screenshot Preview */}
+                <div className="relative w-full aspect-[21/9] max-h-[125px] my-2 rounded-[3px] overflow-hidden border border-[var(--color-border)] shadow-sm">
+                  <img
+                    src="/images/projects/wiimo.svg"
+                    alt="Wiimo system preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
-              <p className="text-[clamp(16px,1.5vw,22px)] font-serif leading-[1.3] text-[var(--color-ink)] mb-3">
-                Handling{" "}
-                <span className="hl" style={{ ["--a" as string]: 0.25, ["--b" as string]: 0.55 }}>
-                  live customer voice orders
-                </span>{" "}
-                in Gulf restaurant chains with multi-lingual intent parsing under acoustic noise.
-              </p>
+                <p className="text-[clamp(15px,1.25vw,19px)] font-serif leading-[1.3] text-[var(--color-ink)] mb-2.5">
+                  Handling{" "}
+                  <span className="hl" style={{ ["--a" as string]: 0.25, ["--b" as string]: 0.55 }}>
+                    live customer voice orders
+                  </span>{" "}
+                  in Gulf restaurant chains with multi-lingual intent parsing under acoustic noise.
+                </p>
 
-              {/* Bold Stat with Marker Circle */}
-              {profileData.stats && profileData.stats.length > 0 && (
+                {/* Bold Stat with Marker Circle */}
                 <div
-                  className="k my-2.5 p-3 bg-[#F5F2EA] border border-[var(--color-border)] rounded-[4px] flex items-center justify-between"
-                  style={{ ["--a" as string]: 0.5, ["--b" as string]: 0.8, ["--r" as string]: "0.5deg" }}
+                  className="k my-2 p-2.5 bg-[#F5F2EA] border border-[var(--color-border)] rounded-[4px] flex items-center justify-between"
+                  style={{ ["--a" as string]: 0.45, ["--b" as string]: 0.75, ["--r" as string]: "0.5deg" }}
                 >
-                  <div className="relative inline-block pr-8">
-                    <span className="font-serif-display text-4xl sm:text-5xl text-[var(--color-studio)] leading-none">
-                      {profileData.stats[0].value}
-                      {profileData.stats[0].suffix}
+                  <div className="relative inline-block pr-6">
+                    <span className="font-serif-display text-3xl sm:text-4xl text-[var(--color-studio)] leading-none">
+                      10,000+
+                    </span>
+                    <span
+                      className="circleMarker"
+                      style={{ ["--a" as string]: 0.6, ["--b" as string]: 0.9 }}
+                      aria-hidden="true"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="font-mono text-[10px] uppercase font-bold tracking-wider">
+                      Orders Handled
+                    </div>
+                    <div className="text-[11px] text-[var(--color-ink-soft)]">
+                      Production systems verified in live operations.
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap gap-1 my-2">
+                  {wiimo.tech.slice(0, 5).map((t) => (
+                    <span
+                      key={t}
+                      className="font-mono text-[9.5px] bg-[#EBE5D8] px-2 py-0.5 rounded-[2px] font-semibold text-[var(--color-ink)]"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="docFoot flex items-center justify-between pt-2 mt-2 border-t border-[var(--color-border)]">
+                  <Link
+                    href={`/projects/${wiimo.slug}`}
+                    className="text-[var(--color-studio)] hover:underline font-bold text-[11px]"
+                  >
+                    Read Architecture Case Study →
+                  </Link>
+                  <span className="text-[9.5px]">FASTAPI · WHISPER · WEBSOCKETS</span>
+                </div>
+              </article>
+
+              {/* ShilpSetu Card */}
+              <article className="shippedCard k" style={{ ["--a" as string]: 0.08, ["--b" as string]: 0.26, ["--r" as string]: "1.2deg" }}>
+                <div className="pin" aria-hidden="true" />
+                <div className="tapeTop" style={{ ["--tw" as string]: "110px", ["--tr" as string]: "-1.5deg" }} aria-hidden="true" />
+
+                <div className="docHead">
+                  <span>CASE FILE: {shilpsetu.title.toUpperCase()}</span>
+                  <span>STATUS: SHIPPED</span>
+                  <span>MARKET: INDIAN ARTISANS</span>
+                </div>
+
+                <div className="docTitle">
+                  ARTISAN E-COMMERCE &amp; DIRECT COMMERCE
+                </div>
+
+                {/* Visual Project Screenshot Preview */}
+                <div className="relative w-full aspect-[21/9] max-h-[125px] my-2 rounded-[3px] overflow-hidden border border-[var(--color-border)] shadow-sm">
+                  <img
+                    src="/images/projects/shilpsetu.svg"
+                    alt="ShilpSetu system preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <p className="text-[clamp(15px,1.25vw,19px)] font-serif leading-[1.3] text-[var(--color-ink)] mb-2.5">
+                  Connecting{" "}
+                  <span className="hl" style={{ ["--a" as string]: 0.3, ["--b" as string]: 0.6 }}>
+                    traditional craftspeople
+                  </span>{" "}
+                  to digital markets via zero-friction WhatsApp order flow and offline QR storefronts.
+                </p>
+
+                {/* Bold Stat with Marker Circle */}
+                <div
+                  className="k my-2 p-2.5 bg-[#F5F2EA] border border-[var(--color-border)] rounded-[4px] flex items-center justify-between"
+                  style={{ ["--a" as string]: 0.5, ["--b" as string]: 0.8, ["--r" as string]: "-0.5deg" }}
+                >
+                  <div className="relative inline-block pr-6">
+                    <span className="font-serif-display text-3xl sm:text-4xl text-[var(--color-studio)] leading-none">
+                      1st Place
                     </span>
                     <span
                       className="circleMarker"
@@ -454,37 +595,37 @@ export function VoxPortfolioApp() {
                   </div>
 
                   <div>
-                    <div className="font-mono text-[11px] uppercase font-bold tracking-wider">
-                      {profileData.stats[0].label}
+                    <div className="font-mono text-[10px] uppercase font-bold tracking-wider">
+                      Regional Hackathon Winner
                     </div>
-                    <div className="text-[12px] text-[var(--color-ink-soft)]">
-                      Production systems verified in live operations.
+                    <div className="text-[11px] text-[var(--color-ink-soft)]">
+                      100+ artisans onboarded with zero training.
                     </div>
                   </div>
                 </div>
-              )}
 
-              <div className="flex flex-wrap gap-1.5 my-2.5">
-                {wiimo.tech.map((t) => (
-                  <span
-                    key={t}
-                    className="font-mono text-[10px] bg-[#EBE5D8] px-2 py-0.5 rounded-[2px] font-semibold text-[var(--color-ink)]"
+                <div className="flex flex-wrap gap-1 my-2">
+                  {shilpsetu.tech.slice(0, 5).map((t) => (
+                    <span
+                      key={t}
+                      className="font-mono text-[9.5px] bg-[#EBE5D8] px-2 py-0.5 rounded-[2px] font-semibold text-[var(--color-ink)]"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="docFoot flex items-center justify-between pt-2 mt-2 border-t border-[var(--color-border)]">
+                  <Link
+                    href={`/projects/${shilpsetu.slug}`}
+                    className="text-[var(--color-studio)] hover:underline font-bold text-[11px]"
                   >
-                    {t}
-                  </span>
-                ))}
-              </div>
-
-              <div className="docFoot flex items-center justify-between pt-2.5 mt-2 border-t border-[var(--color-border)]">
-                <Link
-                  href={`/projects/${wiimo.slug}`}
-                  className="text-[var(--color-studio)] hover:underline font-bold"
-                >
-                  Read Architecture Case Study →
-                </Link>
-                <span>AWS · FASTAPI · WHISPER · WEBSOCKETS</span>
-              </div>
-            </article>
+                    Read Architecture Case Study →
+                  </Link>
+                  <span className="text-[9.5px]">NEXT.JS · POSTGRESQL · WHATSAPP API</span>
+                </div>
+              </article>
+            </div>
           </div>
         </div>
       </section>
@@ -514,90 +655,227 @@ export function VoxPortfolioApp() {
 
           <div ref={(el) => { cameraRefs.current[2] = el; }} className="camera">
             <div className="clippingsGrid">
-              {otherProjects.slice(0, 4).map((p, idx) => {
-                const tapes = ["/vox/tape-1.webp", "/vox/tape-2.webp", "/vox/tape-3.webp"];
-                const tapeImg = tapes[idx % 3];
-                const rotations = ["-1.5deg", "1.2deg", "-0.8deg", "1.5deg"];
-                const startA = 0.04 + idx * 0.05;
-                const endB = startA + 0.16;
+              {/* Project 1: LexAI (Row 1 Left) */}
+              <article
+                className="clippingCard k"
+                style={{
+                  ["--a" as string]: 0.05,
+                  ["--b" as string]: 0.22,
+                  ["--r" as string]: "-1.2deg",
+                }}
+              >
+                <div
+                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-24 h-7 bg-contain bg-no-repeat pointer-events-none z-10"
+                  style={{ backgroundImage: `url('/vox/tape-1.webp')` }}
+                  aria-hidden="true"
+                />
+                <div className="pin" aria-hidden="true" />
 
-                return (
-                  <article
-                    key={p.id}
-                    className="clippingCard k"
-                    style={{
-                      ["--a" as string]: startA,
-                      ["--b" as string]: endB,
-                      ["--r" as string]: rotations[idx % rotations.length],
-                    }}
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="font-mono text-[9px] text-[var(--color-build)] uppercase tracking-wider font-bold">
+                    AI · LEGALTECH
+                  </span>
+                  <span className="font-mono text-[9px] text-[var(--color-ink-soft)] uppercase">
+                    {lexai.status}
+                  </span>
+                </div>
+
+                <div className="relative w-full aspect-[16/7] max-h-[85px] my-1 rounded-[2px] overflow-hidden border border-[var(--color-border)]">
+                  <img
+                    src={`/images/projects/${lexai.slug}.svg`}
+                    alt={`${lexai.title} preview`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <h3 className="font-serif-display text-xl font-bold tracking-tight leading-tight">
+                  {lexai.title}
+                </h3>
+
+                <p className="text-[12.5px] leading-[1.35] text-[var(--color-ink-soft)]">
+                  {lexai.outcome}
+                </p>
+
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {lexai.tech.slice(0, 4).map((t) => (
+                    <span
+                      key={t}
+                      className="font-mono text-[9px] bg-[#EFECE6] px-1.5 py-0.5 rounded-[2px]"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between pt-1.5 border-t border-[var(--color-border)] mt-1">
+                  <Link
+                    href={`/projects/${lexai.slug}`}
+                    className="font-mono text-[10.5px] text-[var(--color-ink)] hover:text-[var(--color-studio)] font-bold"
                   >
-                    <div
-                      className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-24 h-7 bg-contain bg-no-repeat pointer-events-none z-10"
-                      style={{ backgroundImage: `url('${tapeImg}')` }}
-                      aria-hidden="true"
-                    />
-                    <div className="pin" aria-hidden="true" />
+                    Case Study →
+                  </Link>
 
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-[9px] text-[var(--color-build)] uppercase tracking-wider font-bold">
-                        {p.tags ? p.tags.slice(0, 2).join(" · ") : "PROJECT"}
-                      </span>
-                      <span className="font-mono text-[9px] text-[var(--color-ink-soft)] uppercase">
-                        {p.status}
-                      </span>
-                    </div>
+                  {lexai.github && (
+                    <a
+                      href={lexai.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--color-ink)] hover:text-[var(--color-studio)]"
+                      aria-label={`${lexai.title} GitHub repo`}
+                    >
+                      <GithubIcon className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              </article>
 
-                    {/* Screenshot Preview */}
-                    <div className="relative w-full aspect-[16/7] max-h-[75px] my-1 rounded-[2px] overflow-hidden border border-[var(--color-border)]">
-                      <img
-                        src={`/images/projects/${p.slug}.svg`}
-                        alt={`${p.title} preview`}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
+              {/* Project 2: ShilpSetu (Row 1 Right) */}
+              <article
+                className="clippingCard k"
+                style={{
+                  ["--a" as string]: 0.08,
+                  ["--b" as string]: 0.25,
+                  ["--r" as string]: "1.4deg",
+                }}
+              >
+                <div
+                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-24 h-7 bg-contain bg-no-repeat pointer-events-none z-10"
+                  style={{ backgroundImage: `url('/vox/tape-2.webp')` }}
+                  aria-hidden="true"
+                />
+                <div className="pin" aria-hidden="true" />
 
-                    <h3 className="font-serif-display text-lg font-bold tracking-tight leading-tight">
-                      {p.title}
-                    </h3>
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="font-mono text-[9px] text-[var(--color-build)] uppercase tracking-wider font-bold">
+                    SOCIAL IMPACT · E-COMMERCE
+                  </span>
+                  <span className="font-mono text-[9px] text-[var(--color-ink-soft)] uppercase">
+                    {shilpsetu.status}
+                  </span>
+                </div>
 
-                    <p className="text-[12px] leading-[1.35] text-[var(--color-ink-soft)] line-clamp-2">
-                      {p.outcome}
-                    </p>
+                <div className="relative w-full aspect-[16/7] max-h-[85px] my-1 rounded-[2px] overflow-hidden border border-[var(--color-border)]">
+                  <img
+                    src={`/images/projects/${shilpsetu.slug}.svg`}
+                    alt={`${shilpsetu.title} preview`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
 
-                    <div className="flex flex-wrap gap-1 pt-0.5">
-                      {p.tech.slice(0, 3).map((t) => (
-                        <span
-                          key={t}
-                          className="font-mono text-[9px] bg-[#EFECE6] px-1.5 py-0.5 rounded-[2px]"
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    </div>
+                <h3 className="font-serif-display text-xl font-bold tracking-tight leading-tight">
+                  {shilpsetu.title}
+                </h3>
 
-                    <div className="flex items-center justify-between pt-1.5 border-t border-[var(--color-border)] mt-1">
-                      <Link
-                        href={`/projects/${p.slug}`}
-                        className="font-mono text-[10px] text-[var(--color-ink)] hover:text-[var(--color-studio)] font-bold"
-                      >
-                        Case Study →
-                      </Link>
+                <p className="text-[12.5px] leading-[1.35] text-[var(--color-ink-soft)]">
+                  {shilpsetu.outcome}
+                </p>
 
-                      {p.github && (
-                        <a
-                          href={p.github}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[var(--color-ink)] hover:text-[var(--color-studio)]"
-                          aria-label={`${p.title} GitHub repo`}
-                        >
-                          <GithubIcon className="w-3.5 h-3.5" />
-                        </a>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {shilpsetu.tech.slice(0, 4).map((t) => (
+                    <span
+                      key={t}
+                      className="font-mono text-[9px] bg-[#EFECE6] px-1.5 py-0.5 rounded-[2px]"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between pt-1.5 border-t border-[var(--color-border)] mt-1">
+                  <Link
+                    href={`/projects/${shilpsetu.slug}`}
+                    className="font-mono text-[10.5px] text-[var(--color-ink)] hover:text-[var(--color-studio)] font-bold"
+                  >
+                    Case Study →
+                  </Link>
+
+                  {shilpsetu.github && (
+                    <a
+                      href={shilpsetu.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--color-ink)] hover:text-[var(--color-studio)]"
+                      aria-label={`${shilpsetu.title} GitHub repo`}
+                    >
+                      <GithubIcon className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              </article>
+
+              {/* Project 3: DumbDSA (Row 2 Centered) */}
+              <article
+                className="clippingCard k col-span-1 md:col-span-2 md:max-w-[480px] md:justify-self-center w-full"
+                style={{
+                  ["--a" as string]: 0.12,
+                  ["--b" as string]: 0.29,
+                  ["--r" as string]: "-0.8deg",
+                }}
+              >
+                <div
+                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-24 h-7 bg-contain bg-no-repeat pointer-events-none z-10"
+                  style={{ backgroundImage: `url('/vox/tape-3.webp')` }}
+                  aria-hidden="true"
+                />
+                <div className="pin" aria-hidden="true" />
+
+                <div className="flex items-center justify-between mb-0.5">
+                  <span className="font-mono text-[9px] text-[var(--color-build)] uppercase tracking-wider font-bold">
+                    EDUCATION · VISUALIZATION
+                  </span>
+                  <span className="font-mono text-[9px] text-[var(--color-ink-soft)] uppercase">
+                    {dumbdsa.status}
+                  </span>
+                </div>
+
+                <div className="relative w-full aspect-[16/7] max-h-[85px] my-1 rounded-[2px] overflow-hidden border border-[var(--color-border)]">
+                  <img
+                    src={`/images/projects/${dumbdsa.slug}.svg`}
+                    alt={`${dumbdsa.title} preview`}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <h3 className="font-serif-display text-xl font-bold tracking-tight leading-tight">
+                  {dumbdsa.title}
+                </h3>
+
+                <p className="text-[12.5px] leading-[1.35] text-[var(--color-ink-soft)]">
+                  {dumbdsa.outcome}
+                </p>
+
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {dumbdsa.tech.slice(0, 4).map((t) => (
+                    <span
+                      key={t}
+                      className="font-mono text-[9px] bg-[#EFECE6] px-1.5 py-0.5 rounded-[2px]"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="flex items-center justify-between pt-1.5 border-t border-[var(--color-border)] mt-1">
+                  <Link
+                    href={`/projects/${dumbdsa.slug}`}
+                    className="font-mono text-[10.5px] text-[var(--color-ink)] hover:text-[var(--color-studio)] font-bold"
+                  >
+                    Case Study →
+                  </Link>
+
+                  {dumbdsa.github && (
+                    <a
+                      href={dumbdsa.github}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[var(--color-ink)] hover:text-[var(--color-studio)]"
+                      aria-label={`${dumbdsa.title} GitHub repo`}
+                    >
+                      <GithubIcon className="w-3.5 h-3.5" />
+                    </a>
+                  )}
+                </div>
+              </article>
             </div>
           </div>
         </div>
@@ -610,7 +888,7 @@ export function VoxPortfolioApp() {
         id="path"
         ref={(el) => { sectionRefs.current[3] = el; }}
         className="beat"
-        style={{ ["--len" as string]: 2.8 }}
+        style={{ ["--len" as string]: 3.8 }}
         aria-label="Chapter 3: Path"
       >
         <div className="stage">
@@ -806,7 +1084,7 @@ export function VoxPortfolioApp() {
         id="skills"
         ref={(el) => { sectionRefs.current[5] = el; }}
         className="beat"
-        style={{ ["--len" as string]: 2.4 }}
+        style={{ ["--len" as string]: 2.6 }}
         aria-label="Chapter 5: Skills and Education"
       >
         <div className="stage">
@@ -823,49 +1101,134 @@ export function VoxPortfolioApp() {
           </div>
 
           <div ref={(el) => { cameraRefs.current[5] = el; }} className="camera">
-            <div className="max-w-[780px] w-[90vw] grid md:grid-cols-2 gap-4 sm:gap-6 text-left">
-              {/* Skills Panel */}
-              <article className="doc k !max-h-[64vh] p-3.5 sm:p-4" style={{ ["--a" as string]: 0.04, ["--b" as string]: 0.22 }}>
+            <div className="max-w-[960px] w-[92vw] grid md:grid-cols-2 gap-6 text-left">
+              {/* Technical Arsenal Dossier */}
+              <article className="doc k p-5 sm:p-6 !max-h-[72vh]" style={{ ["--a" as string]: 0.04, ["--b" as string]: 0.22, ["--r" as string]: "-1deg" }}>
                 <div className="pin" aria-hidden="true" />
+                <div className="tapeTop" style={{ ["--tw" as string]: "100px", ["--tr" as string]: "1.5deg" }} aria-hidden="true" />
+
                 <div className="docHead">
-                  <span>SYSTEM TOOLKIT</span>
-                  <span>PRODUCTION READY</span>
+                  <span>SYSTEM SPEC // ENGINE ROOM</span>
+                  <span className="text-[var(--color-studio)] font-bold">VERIFIED · PROD READY</span>
                 </div>
-                <h3 className="font-serif-display text-xl font-bold mb-3">Core Competencies</h3>
-                <div className="space-y-2.5 text-[13px]">
-                  <div>
-                    <span className="font-mono text-[10px] text-[var(--color-studio)] block font-bold">AI / ML INFRASTRUCTURE</span>
-                    <span className="text-[var(--color-ink-soft)]">OpenAI Whisper, GPT-4o, LangChain, RAG Pipelines, Vector DBs (Pinecone)</span>
+
+                <h3 className="font-serif-display text-2xl font-bold mb-3 tracking-tight">
+                  Core Technical Arsenal
+                </h3>
+
+                <div className="space-y-3.5 text-[13px]">
+                  <div className="p-2.5 bg-[#FAF8F3] border border-[var(--color-border)] rounded-[3px]">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-mono text-[10px] text-[var(--color-studio)] font-bold uppercase tracking-wider">
+                        01 / AI &amp; SPEECH INFRASTRUCTURE
+                      </span>
+                      <span className="font-mono text-[9px] text-[var(--color-ink-soft)] uppercase">
+                        DEPLOYED
+                      </span>
+                    </div>
+                    <p className="text-[var(--color-ink)] font-semibold text-[13px]">
+                      OpenAI Whisper, GPT-4o, LangChain, RAG Pipelines, Vector DBs (Pinecone)
+                    </p>
+                    <p className="text-[11.5px] text-[var(--color-ink-soft)] mt-0.5">
+                      Low-latency STT, custom prompt chains, acoustic noise tolerance, semantic retrieval.
+                    </p>
                   </div>
-                  <div>
-                    <span className="font-mono text-[10px] text-[var(--color-build)] block font-bold">BACKEND &amp; REAL-TIME</span>
-                    <span className="text-[var(--color-ink-soft)]">Node.js, Python FastAPI, WebSockets, Redis, PostgreSQL, Prisma, Zod</span>
+
+                  <div className="p-2.5 bg-[#FAF8F3] border border-[var(--color-border)] rounded-[3px]">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-mono text-[10px] text-[var(--color-build)] font-bold uppercase tracking-wider">
+                        02 / BACKEND &amp; REAL-TIME SYSTEMS
+                      </span>
+                      <span className="font-mono text-[9px] text-[var(--color-ink-soft)] uppercase">
+                        LOW LATENCY
+                      </span>
+                    </div>
+                    <p className="text-[var(--color-ink)] font-semibold text-[13px]">
+                      Node.js, Python FastAPI, WebSockets, Redis Cache, PostgreSQL, Prisma, Zod
+                    </p>
+                    <p className="text-[11.5px] text-[var(--color-ink-soft)] mt-0.5">
+                      Sub-500ms bidirectional sockets, webhook integrations, schema-validated contracts.
+                    </p>
                   </div>
-                  <div>
-                    <span className="font-mono text-[10px] text-[var(--color-learn)] block font-bold">FRONTEND &amp; MOBILE</span>
-                    <span className="text-[var(--color-ink-soft)]">Next.js App Router, React, TypeScript, React Native, Expo, Tailwind CSS</span>
+
+                  <div className="p-2.5 bg-[#FAF8F3] border border-[var(--color-border)] rounded-[3px]">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-mono text-[10px] text-[var(--color-learn)] font-bold uppercase tracking-wider">
+                        03 / FRONTEND &amp; MOBILE PRODUCT
+                      </span>
+                      <span className="font-mono text-[9px] text-[var(--color-ink-soft)] uppercase">
+                        RESPONSIVE
+                      </span>
+                    </div>
+                    <p className="text-[var(--color-ink)] font-semibold text-[13px]">
+                      Next.js 14/15 App Router, React, TypeScript, React Native, Expo, Tailwind CSS
+                    </p>
+                    <p className="text-[11.5px] text-[var(--color-ink-soft)] mt-0.5">
+                      Cross-platform native apps, micro-interactions, editorial typography, zero CLS.
+                    </p>
                   </div>
+                </div>
+
+                <div className="docFoot flex items-center justify-between pt-2.5 mt-3 border-t border-[var(--color-border)]">
+                  <span>SPEC SHEET: REV 2026</span>
+                  <span className="text-[var(--color-studio)] font-bold">100% PRODUCTION PROVEN</span>
                 </div>
               </article>
 
-              {/* Education Panel */}
-              <article className="doc k !max-h-[64vh] p-3.5 sm:p-4" style={{ ["--a" as string]: 0.08, ["--b" as string]: 0.28, ["--r" as string]: "1deg" }}>
-                <div className="tapeTop" style={{ ["--tw" as string]: "90px", ["--tr" as string]: "-1deg" }} aria-hidden="true" />
+              {/* Academic Foundation Dossier */}
+              <article className="doc k p-5 sm:p-6 !max-h-[72vh]" style={{ ["--a" as string]: 0.08, ["--b" as string]: 0.28, ["--r" as string]: "1.2deg" }}>
+                <div className="pin" aria-hidden="true" />
+                <div className="tapeTop" style={{ ["--tw" as string]: "100px", ["--tr" as string]: "-1.5deg" }} aria-hidden="true" />
+
                 <div className="docHead">
-                  <span>ACADEMIC FOUNDATION</span>
+                  <span>ACADEMIC SPEC // FOUNDATION</span>
                   <span>2023 — 2027</span>
                 </div>
-                <h3 className="font-serif-display text-xl font-bold mb-1.5">B.Tech in Computer Science</h3>
-                <div className="font-mono text-[11px] text-[var(--color-studio)] mb-2 font-semibold">
+
+                <div className="chyron mb-2" style={{ rotate: "1deg" }}>
+                  UNDERGRADUATE · <b>B.TECH CSE</b>
+                </div>
+
+                <h3 className="font-serif-display text-2xl font-bold mb-1 tracking-tight">
+                  B.Tech in Computer Science
+                </h3>
+
+                <div className="font-mono text-[11px] text-[var(--color-studio)] mb-3 font-bold tracking-wider uppercase">
                   R.V.S. COLLEGE OF ENGINEERING &amp; TECHNOLOGY
                 </div>
-                <p className="text-[13px] text-[var(--color-ink-soft)] leading-[1.45]">
-                  Combining deep foundational computer science theory (data structures, algorithms, distributed systems)
-                  with rigorous real-world production engineering.
-                </p>
-                <div className="mt-3 pt-2.5 border-t border-[var(--color-border)] flex items-center justify-between font-mono text-[10.5px]">
-                  <span>CGPA: Active</span>
-                  <span>Jamshedpur, India</span>
+
+                <div className="space-y-3 text-[13px]">
+                  <div className="border-l-2 border-[var(--color-studio)] pl-3">
+                    <span className="font-mono text-[10.5px] font-bold text-[var(--color-ink)] block">
+                      CORE ALGORITHMIC RIGOR
+                    </span>
+                    <p className="text-[12px] text-[var(--color-ink-soft)] leading-snug mt-0.5">
+                      Data structures &amp; algorithms (trees, graphs, DP, sorting), algorithmic analysis, and step-through tracing engines.
+                    </p>
+                  </div>
+
+                  <div className="border-l-2 border-[var(--color-build)] pl-3">
+                    <span className="font-mono text-[10.5px] font-bold text-[var(--color-ink)] block">
+                      SYSTEMS ARCHITECTURE
+                    </span>
+                    <p className="text-[12px] text-[var(--color-ink-soft)] leading-snug mt-0.5">
+                      Operating systems principles, computer networks (TCP/IP, HTTP, WebSockets), and relational database modeling.
+                    </p>
+                  </div>
+
+                  <div className="border-l-2 border-[var(--color-learn)] pl-3">
+                    <span className="font-mono text-[10.5px] font-bold text-[var(--color-ink)] block">
+                      DISCIPLINED ENGINEERING
+                    </span>
+                    <p className="text-[12px] text-[var(--color-ink-soft)] leading-snug mt-0.5">
+                      Bridging deep academic theory into real production software with strict typing, automated validation, and clean version control.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-3 border-t border-[var(--color-border)] flex items-center justify-between font-mono text-[10.5px]">
+                  <span className="font-bold text-[var(--color-ink)]">STATUS: ACTIVE / ADVANCED</span>
+                  <span className="text-[var(--color-ink-soft)]">JAMSHEDPUR, INDIA</span>
                 </div>
               </article>
             </div>
@@ -880,26 +1243,29 @@ export function VoxPortfolioApp() {
         id="contact"
         ref={(el) => { sectionRefs.current[6] = el; }}
         className="beat"
-        style={{ ["--len" as string]: 2.2 }}
+        style={{ ["--len" as string]: 2.5 }}
         aria-label="Contact and Doors"
       >
         <div className="stage">
           <div ref={(el) => { cameraRefs.current[6] = el; }} className="camera">
-            <div className="max-w-[700px] w-[90vw] grid gap-4 sm:gap-5 text-center">
+            <div className="max-w-[760px] w-[92vw] grid gap-5 text-center">
               <div className="k" style={{ ["--a" as string]: 0.04, ["--b" as string]: 0.22 }}>
                 <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--color-studio)] font-bold block mb-1">
-                  THE DOORS
+                  CHAPTER 06 · INQUIRIES &amp; DISPATCH
                 </span>
-                <h2 className="font-serif-display text-[clamp(32px,4.2vw,56px)] font-normal leading-[0.95] tracking-[-0.035em]">
-                  One person. A few worlds.
+                <h2 className="font-serif-display text-[clamp(36px,4.5vw,60px)] font-normal leading-[0.95] tracking-[-0.035em]">
+                  Let&apos;s build something real.
                 </h2>
+                <p className="text-[clamp(14px,1.15vw,16px)] text-[var(--color-ink-soft)] max-w-[520px] mx-auto mt-1">
+                  Available for full-time engineering roles, AI product consulting, and production systems development.
+                </p>
               </div>
 
               {/* Three Torn Doors */}
-              <div className="doorsGrid mx-auto max-w-[620px]">
+              <div className="doorsGrid mx-auto max-w-[660px]">
                 <a
                   href="#shipped"
-                  className="doorLink k !py-2.5 sm:!py-3"
+                  className="doorLink k !py-3"
                   style={{
                     ["--c" as string]: "var(--color-studio)",
                     ["--a" as string]: 0.08,
@@ -913,7 +1279,7 @@ export function VoxPortfolioApp() {
 
                 <Link
                   href="/resume"
-                  className="doorLink k !py-2.5 sm:!py-3"
+                  className="doorLink k !py-3"
                   style={{
                     ["--c" as string]: "var(--color-learn)",
                     ["--on" as string]: "var(--color-ink)",
@@ -928,7 +1294,7 @@ export function VoxPortfolioApp() {
 
                 <a
                   href={`mailto:${profileData.email}`}
-                  className="doorLink k !py-2.5 sm:!py-3"
+                  className="doorLink k !py-3"
                   style={{
                     ["--c" as string]: "var(--color-build)",
                     ["--a" as string]: 0.16,
@@ -936,90 +1302,119 @@ export function VoxPortfolioApp() {
                     ["--r" as string]: "1.8deg",
                   }}
                 >
-                  <b>Say hi</b>
+                  <b>Direct Email</b>
                   <span>03 Send note directly →</span>
                 </a>
               </div>
 
-              {/* Direct Form Box */}
+              {/* Big, Handsome Dispatch Form Box */}
               <div
-                className="k doc mx-auto p-4 text-left max-w-[480px] !max-h-[50vh]"
+                className="k doc mx-auto p-6 sm:p-8 text-left max-w-[680px] w-full !max-h-[72vh] shadow-[0_24px_55px_-18px_rgba(0,0,0,0.3)]"
                 style={{ ["--a" as string]: 0.14, ["--b" as string]: 0.35, ["--r" as string]: "-0.5deg" }}
               >
                 <div className="docHead">
-                  <span>DISPATCH MESSAGE</span>
-                  <span>RESPONSE: &lt; 24H</span>
+                  <span>DISPATCH MEMO // COMM-CHANNEL</span>
+                  <span className="text-[var(--color-studio)] font-bold">RESPONSE: &lt; 12H · OPEN TO WORK</span>
                 </div>
 
                 {formStatus === "success" ? (
-                  <div className="py-3 text-center">
-                    <span className="font-serif-display text-xl text-[var(--color-studio)] block mb-1">
+                  <div className="py-8 text-center">
+                    <span className="font-serif-display text-3xl text-[var(--color-studio)] block mb-2">
                       Note Dispatched!
                     </span>
-                    <p className="text-[13px] text-[var(--color-ink-soft)]">
-                      I&apos;ll be in touch with you shortly.
+                    <p className="text-[15px] text-[var(--color-ink-soft)]">
+                      Thank you for reaching out. I&apos;ll be in touch with you shortly.
                     </p>
                   </div>
                 ) : (
-                  <form onSubmit={handleContactSubmit} className="flex flex-col gap-2.5">
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        type="text"
-                        placeholder="Your name"
-                        value={formName}
-                        onChange={(e) => setFormName(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-[#FAF9F6] border border-[var(--color-border)] rounded-[3px] text-[13px] font-sans focus:outline-none focus:border-[var(--color-studio)]"
-                      />
-                      <input
-                        type="email"
-                        placeholder="Your email"
-                        value={formEmail}
-                        onChange={(e) => setFormEmail(e.target.value)}
-                        className="w-full px-2.5 py-1.5 bg-[#FAF9F6] border border-[var(--color-border)] rounded-[3px] text-[13px] font-sans focus:outline-none focus:border-[var(--color-studio)]"
+                  <form onSubmit={handleContactSubmit} className="flex flex-col gap-3.5 mt-2">
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="font-mono text-[10px] uppercase font-bold text-[var(--color-ink-soft)] block mb-1">
+                          01 / YOUR NAME
+                        </label>
+                        <input
+                          type="text"
+                          placeholder="e.g. Maya Lin"
+                          value={formName}
+                          onChange={(e) => setFormName(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-[#FAF9F6] border border-[rgba(17,17,17,0.2)] focus:border-[var(--color-studio)] rounded-[4px] text-[14px] font-sans focus:outline-none focus:bg-white transition-colors"
+                        />
+                      </div>
+                      <div>
+                        <label className="font-mono text-[10px] uppercase font-bold text-[var(--color-ink-soft)] block mb-1">
+                          02 / YOUR EMAIL
+                        </label>
+                        <input
+                          type="email"
+                          placeholder="e.g. maya@company.com"
+                          value={formEmail}
+                          onChange={(e) => setFormEmail(e.target.value)}
+                          className="w-full px-3.5 py-2.5 bg-[#FAF9F6] border border-[rgba(17,17,17,0.2)] focus:border-[var(--color-studio)] rounded-[4px] text-[14px] font-sans focus:outline-none focus:bg-white transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="font-mono text-[10px] uppercase font-bold text-[var(--color-ink-soft)] block mb-1">
+                        03 / WHAT ARE YOU BUILDING? (PROJECT DETAILS, ROLE, OR TIMELINE)
+                      </label>
+                      <textarea
+                        rows={3}
+                        placeholder="Tell me about the problem, current stage, and where you need help..."
+                        value={formMsg}
+                        onChange={(e) => setFormMsg(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-[#FAF9F6] border border-[rgba(17,17,17,0.2)] focus:border-[var(--color-studio)] rounded-[4px] text-[14px] font-sans focus:outline-none focus:bg-white transition-colors resize-none"
                       />
                     </div>
-                    <textarea
-                      rows={2}
-                      placeholder="What are you building?"
-                      value={formMsg}
-                      onChange={(e) => setFormMsg(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-[#FAF9F6] border border-[var(--color-border)] rounded-[3px] text-[13px] font-sans focus:outline-none focus:border-[var(--color-studio)] resize-none"
-                    />
-                    <button
-                      type="submit"
-                      disabled={formStatus === "loading"}
-                      className="bg-[var(--color-studio)] text-white py-1.5 px-3.5 rounded-[3px] font-mono text-[11px] uppercase font-bold self-start hover:opacity-90 transition-opacity"
-                    >
-                      {formStatus === "loading" ? "Dispatching..." : "Send Note →"}
-                    </button>
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+                      <button
+                        type="submit"
+                        disabled={formStatus === "loading"}
+                        className="bg-[var(--color-studio)] hover:bg-[#d63225] text-white py-3 px-8 rounded-[4px] font-mono text-[12.5px] uppercase font-bold tracking-wider shadow-[0_8px_18px_-6px_rgba(239,59,45,0.45)] hover:-translate-y-0.5 transition-all cursor-pointer"
+                      >
+                        {formStatus === "loading" ? "Dispatching..." : "Transmit Dispatch →"}
+                      </button>
+
+                      <span className="font-mono text-[10px] text-[var(--color-ink-soft)]">
+                        Direct to inbox · No third-party spam
+                      </span>
+                    </div>
                   </form>
                 )}
 
-                {/* Footer links */}
-                <div className="flex items-center justify-between pt-2.5 border-t border-[var(--color-border)] mt-2.5">
-                  <div className="flex items-center gap-3">
+                {/* Direct Connect channels bar */}
+                <div className="flex flex-wrap items-center justify-between gap-3 pt-3.5 border-t border-[var(--color-border)] mt-4">
+                  <div className="flex items-center gap-4">
                     <a
                       href={profileData.github}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[var(--color-ink)] hover:text-[var(--color-studio)]"
+                      className="text-[var(--color-ink)] hover:text-[var(--color-studio)] flex items-center gap-1.5 font-mono text-[11px] font-bold"
                       aria-label="GitHub"
                     >
                       <GithubIcon className="w-4 h-4" />
+                      <span>GitHub ↗</span>
                     </a>
                     <a
                       href={profileData.linkedin}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[var(--color-ink)] hover:text-[var(--color-studio)]"
+                      className="text-[var(--color-ink)] hover:text-[var(--color-studio)] flex items-center gap-1.5 font-mono text-[11px] font-bold"
                       aria-label="LinkedIn"
                     >
                       <LinkedinIcon className="w-4 h-4" />
+                      <span>LinkedIn ↗</span>
                     </a>
                   </div>
-                  <span className="font-mono text-[10.5px] text-[var(--color-ink-soft)]">
+
+                  <a
+                    href={`mailto:${profileData.email}`}
+                    className="font-mono text-[11px] text-[var(--color-studio)] hover:underline font-bold"
+                  >
                     {profileData.email}
-                  </span>
+                  </a>
                 </div>
               </div>
             </div>
