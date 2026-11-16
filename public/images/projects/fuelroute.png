@@ -1,0 +1,32 @@
+<svg width="800" height="480" viewBox="0 0 800 480" xmlns="http://www.w3.org/2000/svg">
+    <rect width="800" height="480" fill="#18181F"/>
+    <!-- Grid overlay -->
+    <defs>
+      <pattern id="grid-fuelroute" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#262630" stroke-width="1"/>
+      </pattern>
+    </defs>
+    <rect width="800" height="480" fill="url(#grid-fuelroute)"/>
+    
+    <!-- Window header bar -->
+    <rect x="24" y="24" width="752" height="432" rx="10" fill="#20202A" stroke="#333342" stroke-width="1.5"/>
+    <rect x="24" y="24" width="752" height="44" rx="10" fill="#14141C"/>
+    <circle cx="48" cy="46" r="6" fill="#EF4444"/>
+    <circle cx="68" cy="46" r="6" fill="#F59E0B"/>
+    <circle cx="88" cy="46" r="6" fill="#10B981"/>
+    
+    <!-- Title / Sub -->
+    <text x="120" y="50" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#A1A1AA">FUELROUTE // PRODUCTION PREVIEW</text>
+    
+    <!-- Accent indicator -->
+    <rect x="52" y="96" width="6" height="48" rx="3" fill="#8B5CF6"/>
+    <text x="70" y="118" font-family="system-ui, sans-serif" font-size="26" font-weight="800" fill="#FFFFFF">FuelRoute</text>
+    <text x="70" y="140" font-family="system-ui, sans-serif" font-size="14" font-weight="500" fill="#A1A1AA">CNG & EV Route Planner — Live Station Availability · Waypoint Optimization</text>
+    
+    <!-- Code / Preview terminal box -->
+    <rect x="52" y="170" width="696" height="250" rx="8" fill="#0D0D12" stroke="#2B2B38" stroke-width="1"/>
+    <text x="76" y="210" font-family="ui-monospace, monospace" font-size="14" font-weight="600" fill="#8B5CF6">$ Route: Delhi → Agra · 230 km</text>
+    <text x="76" y="250" font-family="ui-monospace, monospace" font-size="14" fill="#E4E4E7">&gt; Stop 1: EV Fast Charger (120kW, 2 bays free)</text>
+    <text x="76" y="290" font-family="ui-monospace, monospace" font-size="13" fill="#10B981">✓ Stop 2: CNG Station (Zero queue reported 10m ago)</text>
+    <text x="76" y="340" font-family="ui-monospace, monospace" font-size="12" fill="#71717A">// Architecture validated with Zod &amp; deployed live</text>
+  </svg>

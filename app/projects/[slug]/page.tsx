@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, Github } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
+import { GithubIcon } from "@/components/ui/Icons";
 import { Chip } from "@/components/ui/Chip";
 import { StatusBadge } from "@/components/ui/Badge";
 import { Footer } from "@/components/layout/Footer";
@@ -97,7 +98,7 @@ export default async function ProjectPage({ params }: PageProps) {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold border border-[var(--color-border)] text-[var(--color-text)] hover:border-[var(--color-accent)]/40 transition-colors"
                 >
-                  <Github className="w-4 h-4" aria-hidden="true" />
+                  <GithubIcon className="w-4 h-4" aria-hidden="true" />
                   View code
                 </a>
               )}

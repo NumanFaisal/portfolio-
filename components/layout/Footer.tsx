@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Github, Linkedin, Mail, ArrowUp } from "lucide-react";
+import { Mail, ArrowUp } from "lucide-react";
+import { GithubIcon, LinkedinIcon } from "@/components/ui/Icons";
 
 const year = new Date().getFullYear();
 
@@ -38,7 +39,7 @@ export function Footer() {
               aria-label="GitHub"
               className="p-2 text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors"
             >
-              <Github className="w-4 h-4" />
+              <GithubIcon className="w-4 h-4" />
             </a>
             <a
               href="https://www.linkedin.com/in/numanfaisal/"
@@ -47,7 +48,7 @@ export function Footer() {
               aria-label="LinkedIn"
               className="p-2 text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors"
             >
-              <Linkedin className="w-4 h-4" />
+              <LinkedinIcon className="w-4 h-4" />
             </a>
             <a
               href="mailto:numanfaisal980@gmail.com"

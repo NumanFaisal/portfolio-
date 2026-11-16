@@ -4,7 +4,8 @@ import { useRef } from "react";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { ExternalLink, Github, ArrowRight } from "lucide-react";
+import { ExternalLink, ArrowRight } from "lucide-react";
+import { GithubIcon } from "@/components/ui/Icons";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Chip } from "@/components/ui/Chip";
 import { StatusBadge } from "@/components/ui/Badge";
@@ -102,7 +103,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
                 aria-label={`${project.title} GitHub repository`}
                 onClick={(e) => e.stopPropagation()}
               >
-                <Github className="w-4 h-4" />
+                <GithubIcon className="w-4 h-4" />
               </a>
             )}
             {project.live && (

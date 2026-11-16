@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Linkedin, Github, Calendar, Send, CheckCircle, Loader2 } from "lucide-react";
+import { Mail, Calendar, Send, CheckCircle, Loader2 } from "lucide-react";
+import { GithubIcon, LinkedinIcon } from "@/components/ui/Icons";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toaster";
@@ -196,13 +197,13 @@ const contactLinks = [
     href: "mailto:numanfaisal980@gmail.com",
   },
   {
-    icon: Linkedin,
+    icon: LinkedinIcon,
     label: "LinkedIn",
     value: "/in/numanfaisal",
     href: "https://www.linkedin.com/in/numanfaisal/",
   },
   {
-    icon: Github,
+    icon: GithubIcon,
     label: "GitHub",
     value: "/NumanFaisal",
     href: "https://github.com/NumanFaisal",

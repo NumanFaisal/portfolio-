@@ -1,24 +1,26 @@
 import type { Metadata } from "next";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Instrument_Serif, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { LenisProvider } from "@/components/providers/LenisProvider";
 import { Toaster } from "@/components/ui/Toaster";
-import { Nav } from "@/components/layout/Nav";
-import { CustomCursor } from "@/components/ui/CustomCursor";
+import { EditorialNav } from "@/components/layout/EditorialNav";
 
-const inter = Inter({
+const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: "400",
+  variable: "--font-instrument-serif",
   display: "swap",
-  preload: true,
 });
 
-const spaceGrotesk = Space_Grotesk({
+const geistSans = Geist({
   subsets: ["latin"],
-  variable: "--font-space-grotesk",
+  variable: "--font-geist-sans",
   display: "swap",
-  preload: true,
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://numanfaisal.dev";
@@ -30,7 +32,7 @@ export const metadata: Metadata = {
     template: "%s | Numan Faisal",
   },
   description:
-    "Full-stack and AI engineer who ships. Built Wiimo — a production AI voice ordering agent live in the Gulf market. Open to new opportunities.",
+    "Full-stack and AI engineer who ships. Built Wiimo — a production AI voice ordering agent live in the Gulf market.",
   keywords: [
     "Full-Stack Engineer",
     "AI Engineer",
@@ -70,13 +72,6 @@ export const metadata: Metadata = {
   robots: {
     index: true,
     follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
   },
   alternates: {
     canonical: siteUrl,
@@ -92,28 +87,11 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${inter.variable} ${spaceGrotesk.variable}`}
+      className={`${instrumentSerif.variable} ${geistSans.variable} ${geistMono.variable}`}
     >
       <head>
-        {/* Theme script — prevents flash of wrong theme */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                var theme = localStorage.getItem('theme');
-                var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                if (theme === 'light' || (!theme && !prefersDark)) {
-                  document.documentElement.classList.add('light');
-                } else {
-                  document.documentElement.classList.remove('light');
-                }
-              } catch(e) {}
-            `,
-          }}
-        />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
@@ -134,18 +112,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body>
-        <ThemeProvider>
-          <LenisProvider>
-            <a href="#main-content" className="skip-to-content">
-              Skip to content
-            </a>
-            <CustomCursor />
-            <Nav />
-            <main id="main-content">{children}</main>
-            <Toaster />
-          </LenisProvider>
-        </ThemeProvider>
+      <body suppressHydrationWarning>
+        <EditorialNav />
+        <main id="main-content">{children}</main>
+        <Toaster />
       </body>
     </html>
   );

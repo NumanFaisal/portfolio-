@@ -8,10 +8,11 @@ import { useTheme } from "@/components/providers/ThemeProvider";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { label: "Work", href: "#projects" },
-  { label: "Experience", href: "#experience" },
-  { label: "About", href: "#about" },
-  { label: "Contact", href: "#contact" },
+  { label: "Story", href: "/story" },
+  { label: "Work", href: "/#projects" },
+  { label: "Experience", href: "/#experience" },
+  { label: "About", href: "/#about" },
+  { label: "Contact", href: "/#contact" },
 ];
 
 export function Nav() {

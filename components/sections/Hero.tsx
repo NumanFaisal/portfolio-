@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion, type Variants } from "framer-motion";
 import { ArrowDown, Mail } from "lucide-react";
 import { getTimeGreeting } from "@/lib/utils";
 import dynamic from "next/dynamic";
@@ -15,7 +15,7 @@ const HeroCanvas = dynamic(() => import("@/components/three/HeroCanvas"), {
   ),
 });
 
-const container = {
+const container: Variants = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
@@ -23,9 +23,16 @@ const container = {
   },
 };
 
-const item = {
+const item: Variants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.19, 1, 0.22, 1] } },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: [0.19, 1, 0.22, 1] as [number, number, number, number],
+    },
+  },
 };
 
 export function Hero() {
@@ -99,7 +106,7 @@ export function Hero() {
             </motion.p>
 
             {/* CTAs */}
-            <motion.div variants={item} className="flex flex-wrap gap-4">
+            <motion.div variants={item} className="flex flex-wrap items-center gap-4">
               <a
                 href="#projects"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-[var(--radius-full)] font-semibold accent-gradient text-white hover:opacity-90 transition-opacity shadow-[var(--shadow-accent)]"
@@ -113,6 +120,13 @@ export function Hero() {
               >
                 <Mail className="w-4 h-4" />
                 Let&apos;s talk
+              </a>
+              <a
+                href="/story"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-[var(--color-muted)] hover:text-[var(--color-text)] transition-colors border-b border-dashed border-[var(--color-muted)]/40 hover:border-[var(--color-accent)]"
+              >
+                <span className="w-2 h-2 rounded-full bg-[var(--color-accent)] animate-pulse" aria-hidden="true" />
+                Watch the story ↗
               </a>
             </motion.div>
 

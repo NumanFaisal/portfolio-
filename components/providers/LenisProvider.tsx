@@ -1,12 +1,23 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import Lenis from "lenis";
 
 export function LenisProvider({ children }: { children: React.ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
+    // Lenis must not run on /story (native scrolling only)
+    if (pathname === "/story") {
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        lenisRef.current = null;
+      }
+      return;
+    }
+
     // Respect prefers-reduced-motion
     const prefersReduced = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
@@ -31,10 +42,12 @@ export function LenisProvider({ children }: { children: React.ReactNode }) {
 
     return () => {
       cancelAnimationFrame(rafId);
-      lenis.destroy();
-      lenisRef.current = null;
+      if (lenisRef.current) {
+        lenisRef.current.destroy();
+        lenisRef.current = null;
+      }
     };
-  }, []);
+  }, [pathname]);
 
   return <>{children}</>;
 }
