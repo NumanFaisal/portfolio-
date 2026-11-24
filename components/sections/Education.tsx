@@ -34,7 +34,7 @@ export function Education() {
               </p>
               <p className="text-sm text-[var(--color-muted)] mt-2">2023 — 2027</p>
               <p className="text-sm text-[var(--color-muted)] mt-4 leading-relaxed max-w-lg">
-                Building in parallel with studying — most of what I know comes from shipping real products, 
+                Building in parallel with studying — most of what I know comes from shipping real products,
                 but college gave me the fundamentals and the network that connects dots I couldn&apos;t have found alone.
               </p>
             </div>

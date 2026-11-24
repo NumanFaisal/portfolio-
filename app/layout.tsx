@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Instrument_Serif, Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/Toaster";
-import { EditorialNav } from "@/components/layout/EditorialNav";
 
 const instrumentSerif = Instrument_Serif({
   subsets: ["latin"],
@@ -111,9 +110,23 @@ export default function RootLayout({
             }),
           }}
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('unhandledrejection', function(event) {
+                if (event.reason && (
+                  (typeof event.reason.message === 'string' && event.reason.message.includes('MetaMask')) ||
+                  (event.reason.stack && event.reason.stack.includes('chrome-extension://'))
+                )) {
+                  event.stopImmediatePropagation();
+                  event.preventDefault();
+                }
+              });
+            `,
+          }}
+        />
       </head>
       <body suppressHydrationWarning>
-        <EditorialNav />
         <main id="main-content">{children}</main>
         <Toaster />
       </body>

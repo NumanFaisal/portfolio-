@@ -64,7 +64,7 @@ function ContactForm() {
         <CheckCircle className="w-10 h-10 text-green-400" />
         <h3 className="font-display text-2xl font-bold">Message sent!</h3>
         <p className="text-[var(--color-muted)] max-w-sm">
-          Thanks for reaching out. I&apos;ll typically get back within 24 hours — 
+          Thanks for reaching out. I&apos;ll typically get back within 24 hours —
           usually much sooner.
         </p>
         <button

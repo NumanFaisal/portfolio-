@@ -3,33 +3,7 @@
 import { motion } from "framer-motion";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { Chip } from "@/components/ui/Chip";
-
-const skillGroups = [
-  {
-    label: "Frontend",
-    skills: ["React", "Next.js", "TypeScript", "Tailwind CSS", "Framer Motion", "React Native", "Expo"],
-  },
-  {
-    label: "Backend",
-    skills: ["Node.js", "Express", "FastAPI", "Python", "REST APIs", "WebSockets", "GraphQL"],
-  },
-  {
-    label: "AI & ML",
-    skills: ["OpenAI API", "LangChain", "Whisper", "GPT-4o", "RAG pipelines", "Prompt engineering", "Vector databases"],
-  },
-  {
-    label: "Data & Storage",
-    skills: ["PostgreSQL", "MongoDB", "Redis", "Pinecone", "Prisma", "Drizzle ORM"],
-  },
-  {
-    label: "Infrastructure",
-    skills: ["Docker", "AWS EC2", "AWS RDS", "Vercel", "Cloudinary", "GitHub Actions", "CI/CD"],
-  },
-  {
-    label: "Tools & Practices",
-    skills: ["Git", "Zod", "Testing", "Code review", "Technical writing", "Agile"],
-  },
-];
+import { skillGroups } from "@/src/data/skills";
 
 export function Skills() {
   return (
@@ -42,24 +16,45 @@ export function Skills() {
           className="mb-16"
         />
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div
+          className="w-full gap-6"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+          }}
+        >
           {skillGroups.map((group, i) => (
             <motion.div
               key={group.label}
-              initial={{ opacity: 0, y: 24 }}
+              initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{
-                delay: i * 0.08,
-                duration: 0.5,
-                ease: [0.19, 1, 0.22, 1],
+                delay: i * 0.06,
+                duration: 0.35,
+                ease: [0.22, 1, 0.36, 1],
               }}
-              className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-xl)] p-6"
+              className="bg-[var(--color-surface)] border border-[var(--color-border)] rounded-[var(--radius-xl)] p-6 h-full flex flex-col justify-between text-left transition-all duration-200 hover:shadow-md hover:border-[var(--color-ink-soft)]"
             >
-              <h3 className="font-display text-sm font-bold uppercase tracking-widest text-[var(--color-accent)] mb-4">
-                {group.label}
-              </h3>
-              <div className="flex flex-wrap gap-2">
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-display text-sm font-bold uppercase tracking-widest text-[var(--color-accent)]">
+                    {group.label}
+                  </h3>
+                  {group.badge && (
+                    <span className="font-mono text-[9px] uppercase tracking-wider px-2 py-0.5 rounded bg-[var(--color-border)] text-[var(--color-ink-soft)] font-medium">
+                      {group.badge}
+                    </span>
+                  )}
+                </div>
+                {group.description && (
+                  <p className="text-xs text-[var(--color-ink-soft)] mb-4 leading-relaxed">
+                    {group.description}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-2">
                 {group.skills.map((skill) => (
                   <Chip key={skill}>{skill}</Chip>
                 ))}

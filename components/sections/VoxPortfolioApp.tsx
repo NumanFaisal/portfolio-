@@ -1,1424 +1,721 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import profileData from "@/data/profile.json";
 import experienceData from "@/data/experience.json";
 import projectsData from "@/data/projects.json";
-import { GithubIcon, LinkedinIcon } from "@/components/ui/Icons";
-import { toast } from "@/components/ui/Toaster";
 
-interface Keyframe {
-  p: number;
-  x: number;
-  y: number;
-  scale: number;
-  rotate: number;
+function d(a: number, b: number, extra?: Record<string, any>): React.CSSProperties {
+  return { "--a": a, "--b": b, ...extra } as React.CSSProperties;
 }
 
-function smoothstep(min: number, max: number, value: number) {
-  const x = Math.max(0, Math.min(1, (value - min) / (max - min)));
-  return x * x * (3 - 2 * x);
+function o(num: number) {
+  return Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(num);
 }
 
-function interpolateKeyframes(keyframes: Keyframe[], p: number, isMobile: boolean) {
-  if (!keyframes || keyframes.length === 0) return { x: 0, y: 0, scale: 1, rotate: 0 };
-  if (p <= keyframes[0].p) {
-    const k = keyframes[0];
-    return {
-      x: isMobile ? k.x * 0.35 : k.x,
-      y: isMobile ? k.y * 0.35 : k.y,
-      scale: isMobile ? 1 + (k.scale - 1) * 0.35 : k.scale,
-      rotate: isMobile ? k.rotate * 0.35 : k.rotate,
-    };
-  }
-  const last = keyframes[keyframes.length - 1];
-  if (p >= last.p) {
-    return {
-      x: isMobile ? last.x * 0.35 : last.x,
-      y: isMobile ? last.y * 0.35 : last.y,
-      scale: isMobile ? 1 + (last.scale - 1) * 0.35 : last.scale,
-      rotate: isMobile ? last.rotate * 0.35 : last.rotate,
-    };
-  }
+function getTransform(keys: number[][], p: number, mult = 1) {
+  if (!keys || keys.length === 0) return "none";
+  let s = keys[0];
+  let t = keys[keys.length - 1];
 
-  for (let i = 0; i < keyframes.length - 1; i++) {
-    const k1 = keyframes[i];
-    const k2 = keyframes[i + 1];
-    if (p >= k1.p && p <= k2.p) {
-      const t = smoothstep(k1.p, k2.p, p);
-      let x = k1.x + (k2.x - k1.x) * t;
-      let y = k1.y + (k2.y - k1.y) * t;
-      let scale = k1.scale + (k2.scale - k1.scale) * t;
-      let rotate = k1.rotate + (k2.rotate - k1.rotate) * t;
-      if (isMobile) {
-        x *= 0.35;
-        y *= 0.35;
-        scale = 1 + (scale - 1) * 0.35;
-        rotate *= 0.35;
-      }
-      return { x, y, scale, rotate };
+  for (let i = 0; i < keys.length - 1; i++) {
+    if (p >= keys[i][0] && p <= keys[i + 1][0]) {
+      s = keys[i];
+      t = keys[i + 1];
+      break;
     }
   }
-  return { x: 0, y: 0, scale: 1, rotate: 0 };
+
+  if (p <= keys[0][0]) t = s = keys[0];
+  if (p >= keys[keys.length - 1][0]) s = t = keys[keys.length - 1];
+
+  const progressBetween = t[0] === s[0] ? 1 : (p - s[0]) / (t[0] - s[0]);
+  const smooth = progressBetween * progressBetween * (3 - 2 * progressBetween);
+  const lerp = (idx: number) => s[idx] + (t[idx] - s[idx]) * smooth;
+
+  return `translate(${(lerp(1) * mult).toFixed(3)}%, ${(lerp(2) * mult).toFixed(3)}%) scale(${(
+    1 +
+    (lerp(3) - 1) * mult
+  ).toFixed(4)}) rotate(${(lerp(4) * mult).toFixed(3)}deg)`;
+}
+
+function Chapter({
+  len,
+  n,
+  title,
+  world,
+  children,
+}: {
+  len: number;
+  n: string;
+  title: string;
+  world: "tech" | "build" | "studio" | "learn";
+  children: React.ReactNode;
+}) {
+  return (
+    <section
+      className="beat"
+      data-beat=""
+      aria-label={`Chapter ${n}: ${title}`}
+      style={{
+        ["--len" as string]: len,
+        ["--c" as string]: `var(--color-${world})`,
+        ["--on" as string]: world === "learn" ? "var(--color-ink)" : "#fff",
+      }}
+    >
+      <div className="stage">
+        {children}
+        <div className="chapter k" style={d(0.06, 0.14)}>
+          <p className="chapterNo">{n}</p>
+          <h2 className="chapterTitle">{title}</h2>
+          <i className="chapterEdge" aria-hidden="true" />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Hl({ a, b, children }: { a: number; b: number; children: React.ReactNode }) {
+  return (
+    <mark className="hl k" style={d(a, b)}>
+      {children}
+    </mark>
+  );
 }
 
 export function VoxPortfolioApp() {
-  const sectionRefs = useRef<(HTMLElement | null)[]>([]);
-  const cameraRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const pValuesRef = useRef<number[]>([0, 0, 0, 0, 0, 0, 0]);
-
-  // Form state
-  const [formName, setFormName] = useState("");
-  const [formEmail, setFormEmail] = useState("");
-  const [formMsg, setFormMsg] = useState("");
-  const [formStatus, setFormStatus] = useState<"idle" | "loading" | "success">("idle");
-
-  const cameraConfigs: Keyframe[][] = [
-    // 0: Title card
-    [
-      { p: 0.0, x: 0, y: 0, scale: 1, rotate: 0 },
-      { p: 0.5, x: 2, y: -2, scale: 1.05, rotate: 0.4 },
-      { p: 1.0, x: 0, y: 0, scale: 1, rotate: 0 },
-    ],
-    // 1: Wiimo Shipped
-    [
-      { p: 0.0, x: 0, y: 0, scale: 1, rotate: 0 },
-      { p: 0.25, x: 0, y: 8, scale: 1.15, rotate: -0.5 },
-      { p: 0.65, x: -5, y: -10, scale: 1.25, rotate: 0.5 },
-      { p: 0.9, x: 0, y: 0, scale: 1.1, rotate: 0 },
-      { p: 1.0, x: 0, y: 0, scale: 1, rotate: 0 },
-    ],
-    // 2: Built Projects
-    [
-      { p: 0.0, x: 0, y: 0, scale: 1, rotate: 0 },
-      { p: 0.35, x: -8, y: 6, scale: 1.08, rotate: -1 },
-      { p: 0.75, x: 8, y: -6, scale: 1.08, rotate: 1 },
-      { p: 1.0, x: 0, y: 0, scale: 1, rotate: 0 },
-    ],
-    // 3: The Path (Timeline)
-    [
-      { p: 0.0, x: 0, y: 0, scale: 1, rotate: 0 },
-      { p: 0.5, x: 0, y: 0, scale: 1.02, rotate: 0 },
-      { p: 1.0, x: 0, y: 0, scale: 1, rotate: 0 },
-    ],
-    // 4: Map & Roots (zooms into Jamshedpur / Eastern India on scroll)
-    [
-      { p: 0.0, x: 0, y: 0, scale: 1, rotate: 0 },
-      { p: 0.25, x: 0, y: 0, scale: 1.02, rotate: 0 },
-      { p: 0.5, x: -5, y: -2, scale: 1.32, rotate: -0.4 },
-      { p: 0.75, x: -5, y: -2, scale: 1.32, rotate: -0.4 },
-      { p: 1.0, x: 0, y: 0, scale: 1, rotate: 0 },
-    ],
-    // 5: Skills & Education
-    [
-      { p: 0.0, x: 0, y: 0, scale: 1, rotate: 0 },
-      { p: 0.5, x: -3, y: 4, scale: 1.06, rotate: 0.5 },
-      { p: 1.0, x: 0, y: 0, scale: 1, rotate: 0 },
-    ],
-    // 6: Contact & End
-    [
-      { p: 0.0, x: 0, y: 0, scale: 1, rotate: 0 },
-      { p: 1.0, x: 0, y: 0, scale: 1, rotate: 0 },
-    ],
-  ];
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced) {
-      sectionRefs.current.forEach((sec) => {
-        if (sec) sec.style.setProperty("--p", "1");
-      });
-      return;
-    }
+    const root = containerRef.current;
+    if (!root || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    let lastTime = performance.now();
-    let animId: number;
-    let isMobile = window.innerWidth <= 768;
+    // Enable JS progressive enhancement for Vox beats
+    document.documentElement.classList.add("js");
 
+    const beats = [...root.querySelectorAll<HTMLElement>("[data-beat]")].map((node) => ({
+      node,
+      p: -1,
+    }));
+
+    const cams = [...root.querySelectorAll<HTMLElement>("[data-cam]")].map((node) => ({
+      node,
+      beat: beats.find((b) => b.node === node.closest("[data-beat]"))!,
+      keys: JSON.parse(node.dataset.cam || "[]"),
+      p: -1,
+      pan: node.hasAttribute("data-pan"),
+    }));
+
+    const turb = root.querySelector("feTurbulence");
+    let mult = window.innerWidth < 820 ? 0.35 : 1;
     const onResize = () => {
-      isMobile = window.innerWidth <= 768;
+      mult = window.innerWidth < 820 ? 0.35 : 1;
+      cams.forEach((c) => (c.p = -1));
     };
     window.addEventListener("resize", onResize, { passive: true });
 
+    let rafId = 0;
+    let lastTime = performance.now();
+    let lastBoil = -1000;
+    let boilCount = 0;
+
     const loop = (currentTime: number) => {
-      const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+      rafId = requestAnimationFrame(loop);
+      const dt = Math.min(0.1, (currentTime - lastTime) / 1000);
       lastTime = currentTime;
-
+      const decay = 1 - Math.exp(-(9 * dt));
       const vh = window.innerHeight;
-      const scrollY = window.scrollY;
 
-      sectionRefs.current.forEach((sec, idx) => {
-        if (!sec) return;
-        const rect = sec.getBoundingClientRect();
-        const top = rect.top + scrollY;
-        const height = sec.offsetHeight;
+      for (const beat of beats) {
+        const rect = beat.node.getBoundingClientRect();
+        if (rect.bottom < -vh || rect.top > 2 * vh) continue;
+        const totalScrollable = rect.height - vh;
+        const progress = Math.min(
+          1,
+          Math.max(0, totalScrollable > 0 ? -rect.top / totalScrollable : 1 - rect.top / vh)
+        );
+        const nextP =
+          beat.p < 0 || Math.abs(progress - beat.p) < 0.0004
+            ? progress
+            : beat.p + (progress - beat.p) * decay;
 
-        if (rect.bottom < -vh || rect.top > vh * 2) {
-          return;
+        if (nextP !== beat.p) {
+          beat.p = nextP;
+          beat.node.style.setProperty("--p", nextP.toFixed(4));
         }
+      }
 
-        const scrollDistance = Math.max(1, height - vh);
-        const currentScroll = Math.max(0, scrollY - top);
-        const targetP = Math.min(Math.max(currentScroll / scrollDistance, 0), 1);
+      for (const cam of cams) {
+        if (!cam.beat || cam.beat.p < 0 || cam.p === cam.beat.p) continue;
+        cam.p = cam.beat.p;
+        cam.node.style.transform = getTransform(cam.keys, cam.p, cam.pan ? 1 : mult);
+      }
 
-        const prevP = pValuesRef.current[idx] || 0;
-        const nextP = prevP + (targetP - prevP) * (1 - Math.exp(-dt * 9));
-
-        if (Math.abs(nextP - prevP) > 0.0004 || targetP === 0 || targetP === 1) {
-          pValuesRef.current[idx] = nextP;
-          sec.style.setProperty("--p", nextP.toFixed(4));
-
-          const cam = cameraRefs.current[idx];
-          if (cam && cameraConfigs[idx]) {
-            const { x, y, scale, rotate } = interpolateKeyframes(cameraConfigs[idx], nextP, isMobile);
-            cam.style.transform = `translate3d(${x}%, ${y}%, 0) scale(${scale}) rotate(${rotate}deg)`;
-          }
-
-          // Timeline sideways pan for beat 3
-          if (idx === 3 && !prefersReduced) {
-            const track = sec.querySelector("[data-timeline-board]") as HTMLElement;
-            if (track) {
-              const totalPanels = chronologicalExp.length;
-              const panPercent = -nextP * ((totalPanels - 1) / totalPanels) * 100;
-              track.style.transform = `translate3d(${panPercent}%, 0, 0)`;
-            }
-          }
+      if (currentTime - lastBoil >= 81.33) {
+        lastBoil = currentTime;
+        if (++boilCount % 2 === 0 && turb) {
+          turb.setAttribute("seed", String(boilCount % 7));
         }
-      });
-
-      animId = requestAnimationFrame(loop);
+        root.style.setProperty("--grain-x", `${(37 * boilCount) % 240}px`);
+        root.style.setProperty("--grain-y", `${(91 * boilCount) % 240}px`);
+      }
     };
 
-    animId = requestAnimationFrame(loop);
+    rafId = requestAnimationFrame(loop);
 
     return () => {
-      cancelAnimationFrame(animId);
+      cancelAnimationFrame(rafId);
       window.removeEventListener("resize", onResize);
     };
   }, []);
 
-  const handleContactSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formName || !formEmail || !formMsg) {
-      toast("Please fill out all fields.", "error");
-      return;
-    }
-    setFormStatus("loading");
-    try {
-      const res = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: formName, email: formEmail, message: formMsg, _honey: "" }),
-      });
-      if (!res.ok) throw new Error();
-      setFormStatus("success");
-      setFormName("");
-      setFormEmail("");
-      setFormMsg("");
-      toast("Message sent successfully!", "success");
-    } catch {
-      setFormStatus("idle");
-      toast("Error sending message. Please try email directly.", "error");
-    }
-  };
+  const timelineJobs = [
+    {
+      years: "2026",
+      company: "Creative Homme",
+      note: "LIVE IN BAHRAIN",
+      role: "Trainee Software Engineer · Wiimo",
+      summary:
+        "Shipped a production AI voice ordering agent live in the Bahrain/Gulf restaurant market. Sub-500ms voice turnaround, custom Whisper acoustic fine-tuning, and robust GPT-4o function calling for POS sync.",
+      stat: ["SUB-500MS", "LIVE VOICE AI AGENT"],
+      shot: { src: "/images/projects/wiimo.svg", alt: "Wiimo Voice Agent" },
+    },
+    {
+      years: "2025",
+      company: "Orbinger India",
+      note: "TATA STEEL VENDOR PORTAL",
+      role: "Full Stack Developer",
+      summary:
+        "Engineered an enterprise vendor management portal deployed at Tata Steel, an intelligent role-based HRMS AI chatbot on Rails, and an Expo React Native mobile app for industrial weld seam inspection.",
+      stat: ["TATA STEEL", "ENTERPRISE DEPLOYMENT"],
+      shot: { src: "/images/projects/lexai.svg", alt: "Tata Steel VMS" },
+    },
+    {
+      years: "2024",
+      company: "Seeup Tech",
+      note: "WEB DEV INTERN",
+      role: "Full Stack Web Developer Intern",
+      summary:
+        "Engineered full-stack responsive web applications and high-throughput REST APIs. Bridged modern React client interfaces with scalable Node.js/Express backend architectures.",
+      stat: ["30+ APIS", "TESTED & DEPLOYED"],
+      shot: { src: "/images/projects/dumbdsa.svg", alt: "Seeup Tech Platform" },
+    },
+    {
+      years: "2023 to 2027",
+      company: "R.V.S. College of Eng.",
+      note: "B.TECH CSE",
+      role: "Computer Science & Engineering Undergrad",
+      summary:
+        "Deep foundation in Data Structures, Advanced Algorithms, Operating Systems, Computer Networks, and Database Engineering. Bridging theoretical rigor into resilient production systems.",
+      stat: ["ACADEMIC RIGOR", "DSA & SYSTEM DESIGN"],
+      shot: { src: "/images/projects/shilpsetu.svg", alt: "Academic Foundation" },
+    },
+  ];
 
-  const wiimo = projectsData.find((p) => p.id === "wiimo") ?? projectsData[0];
-  const shilpsetu = projectsData.find((p) => p.id === "shilpsetu") ?? projectsData[1];
-  const lexai = projectsData.find((p) => p.id === "lexai") ?? projectsData[2];
-  const dumbdsa = projectsData.find((p) => p.id === "dumbdsa") ?? projectsData[3];
-  const chronologicalExp = [...experienceData].reverse();
+  const benchmarks = [
+    {
+      id: "wiimo-latency",
+      title: "Wiimo live speech-to-order turnaround",
+      metric: "480ms",
+      value: 100,
+      isTop: true,
+      url: "#",
+    },
+    {
+      id: "tata-throughput",
+      title: "Tata Steel VMS monthly vendor operations",
+      metric: "1.2M",
+      value: 82,
+      isTop: false,
+      url: "#",
+    },
+    {
+      id: "dsa-steps",
+      title: "DumbDSA step-by-step algorithm node traces",
+      metric: "650K",
+      value: 68,
+      isTop: false,
+      url: "#",
+    },
+    {
+      id: "lexai-latency",
+      title: "LexAI legal query contextual synthesis",
+      metric: "120ms",
+      value: 52,
+      isTop: false,
+      url: "#",
+    },
+    {
+      id: "fuelroute-acc",
+      title: "FuelRoute optimal dispatch computation",
+      metric: "99.8%",
+      value: 40,
+      isTop: false,
+      url: "#",
+    },
+  ];
+
+  const projectClippings = [
+    {
+      name: "Wiimo",
+      brief: "Production AI voice ordering agent live in Bahrain and Gulf restaurant drive-thrus.",
+      badge: "LIVE IN PRODUCTION",
+    },
+    {
+      name: "Tata Steel VMS",
+      brief: "Enterprise supplier management portal handling heavy vendor compliance & workflows.",
+      badge: "ENTERPRISE DEPLOYED",
+    },
+    {
+      name: "DumbDSA",
+      brief: "Interactive algorithmic execution tracer and tree/graph step-through visualizer.",
+      badge: "OPEN SOURCE",
+    },
+    {
+      name: "LexAI",
+      brief: "High-accuracy legal search and real-time citation retrieval with vector embeddings.",
+      badge: "RAG PIPELINE",
+    },
+  ];
+
+  const articles = [
+    { label: "AI ENGINE", title: "Low-latency voice agent architectures with Whisper and WebSockets", slug: "wiimo" },
+    { label: "ENTERPRISE", title: "Building resilient supplier compliance systems for heavy industry", slug: "tata-steel" },
+    { label: "ALGORITHMS", title: "Visualizing tree traversals and dynamic programming state machines", slug: "dumbdsa" },
+    { label: "FULL STACK", title: "Next.js App Router, strictly typed contracts, and zero CLS", slug: "nextjs" },
+  ];
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="vox">
       {/* SVG Filters for 12fps texture boil */}
       <svg className="defs" aria-hidden="true">
         <filter id="vox-boil">
-          <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" result="noise" />
-          <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves={2} seed={0} />
+          <feDisplacementMap in="SourceGraphic" scale={4} />
         </filter>
       </svg>
-
-      {/* Persistent Nav */}
-      <Link href="/" className="homeLink" aria-label="Numan Faisal">
-        Numan Faisal
-      </Link>
-
-      <nav className="navPill" aria-label="Chapter quick navigation">
-        <a href="#shipped">01 Shipped</a>
-        <a href="#built">02 Built</a>
-        <a href="#path">03 Path</a>
-        <a href="#roots">04 Roots</a>
-        <a href="#skills">05 Toolkit</a>
-        <a href="#contact">06 Contact</a>
-      </nav>
 
       {/* =========================================================================
           BEAT 0: OPENING / TITLE CARD
           ========================================================================= */}
-      <section
-        ref={(el) => { sectionRefs.current[0] = el; }}
-        className="beat"
-        style={{ ["--len" as string]: 2.5 }}
-        aria-label="Title"
-      >
+      <section className="beat" data-beat="" style={{ ["--len" as string]: 1.6 }}>
         <div className="stage">
-          <div ref={(el) => { cameraRefs.current[0] = el; }} className="camera">
+          <div
+            className="camera"
+            data-cam={JSON.stringify([
+              [0, 0, 0, 1, 0],
+              [1, 0, -4, 1.18, -1.5],
+            ])}
+          >
             {/* Torn color strips behind cutout */}
-            <div className="absolute right-[4vw] top-[30%] w-[36vw] max-w-[480px] pointer-events-none -z-10">
-              <span
-                className="torn"
-                style={{
-                  ["--c" as string]: "var(--color-learn)",
-                  ["--r" as string]: "-2deg",
-                  ["--d" as string]: "0.2s",
-                }}
-              />
-              <span
-                className="torn"
-                style={{
-                  ["--c" as string]: "var(--color-build)",
-                  ["--r" as string]: "1.5deg",
-                  ["--d" as string]: "0.35s",
-                }}
-              />
-              <span
-                className="torn"
-                style={{
-                  ["--c" as string]: "var(--color-studio)",
-                  ["--r" as string]: "-1deg",
-                  ["--d" as string]: "0.5s",
-                }}
-              />
+            <div className="openStrips" aria-hidden="true">
+              <i className="torn" style={d(0, 0, { "--c": "var(--color-tech)", "--r": "-3deg", "--d": ".55s" })} />
+              <i className="torn" style={d(0, 0, { "--c": "var(--color-studio)", "--r": "2deg", "--d": ".7s" })} />
+              <i className="torn" style={d(0, 0, { "--c": "var(--color-learn)", "--r": "-1deg", "--d": ".85s" })} />
             </div>
 
             {/* Left Content Card */}
-            <div
-              className="relative z-10 max-w-[720px] w-[86vw] ml-[6vw] justify-self-start grid gap-3.5"
-              style={{
-                opacity: "calc(1 - clamp(0, (var(--p) - 0.55) / 0.35, 1))",
-                transform: "translateY(calc(clamp(0, (var(--p) - 0.55) / 0.35, 1) * -30px))",
-              }}
-            >
-              <div
-                className="chyron"
-                style={{ rotate: "-2deg" }}
-              >
-                PORTFOLIO · <b>2026</b>
-              </div>
-
-              <h1 className="font-serif-display text-[clamp(44px,6.8vw,86px)] font-normal leading-[0.92] tracking-[-0.03em]">
-                I build{" "}
-                <span className="hlOpen">AI products</span>
-                <br />
-                that ship.
-              </h1>
-
-              <p className="max-w-[560px] text-[var(--color-ink-soft)] text-[clamp(16px,1.25vw,19px)] leading-[1.5]">
-                Currently powering <strong className="text-[var(--color-studio)] font-semibold">Wiimo</strong>, a
-                production AI voice ordering agent running live across restaurant chains in the Gulf
-                market.
+            <div className="open">
+              <p className="chyron" style={{ ["--d" as string]: ".1s" }}>
+                Explained
               </p>
 
-              {/* Verified Metrics Strip on Hero */}
-              <div className="flex items-center gap-6 py-2 border-y border-[var(--color-border)] max-w-md my-0.5">
-                {profileData.stats.slice(0, 3).map((st) => (
-                  <div key={st.label}>
-                    <div className="font-serif-display text-2xl sm:text-3xl font-bold text-[var(--color-studio)] leading-none">
-                      {st.value}{st.suffix}
-                    </div>
-                    <div className="font-mono text-[9px] uppercase tracking-wider text-[var(--color-ink-soft)] mt-1">
-                      {st.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <h1 className="openTitle">
+                <span className="pop" style={{ ["--d" as string]: ".2s" }}>
+                  How one engineer
+                </span>{" "}
+                <span className="pop" style={{ ["--d" as string]: ".35s" }}>
+                  ended up running
+                </span>{" "}
+                <span className="pop hlOpen" style={{ ["--d" as string]: ".5s" }}>
+                  three worlds
+                </span>
+              </h1>
 
-              <div className="flex flex-wrap items-center gap-4 pt-3">
-                <a
-                  href="#shipped"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "10px",
-                    backgroundColor: "var(--color-studio)",
-                    color: "#ffffff",
-                    padding: "15px 32px",
-                    borderRadius: "4px",
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    textDecoration: "none",
-                    boxShadow: "0 10px 25px -6px rgba(239, 59, 45, 0.45)",
-                    lineHeight: 1,
-                    cursor: "pointer",
-                  }}
-                  className="hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-6px_rgba(239,59,45,0.6)] transition-all"
-                >
-                  <span>See my work</span>
-                  <span className="text-white/80 font-bold text-[18px]">↓</span>
-                </a>
-                <a
-                  href="#contact"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "10px",
-                    backgroundColor: "#ffffff",
-                    color: "var(--color-ink)",
-                    padding: "15px 32px",
-                    borderRadius: "4px",
-                    border: "2px solid rgba(17, 17, 17, 0.25)",
-                    fontSize: "16px",
-                    fontWeight: 700,
-                    textDecoration: "none",
-                    boxShadow: "0 4px 16px -6px rgba(0, 0, 0, 0.16)",
-                    lineHeight: 1,
-                    cursor: "pointer",
-                  }}
-                  className="hover:-translate-y-0.5 hover:border-[var(--color-ink)] hover:shadow-[0_8px_20px_-6px_rgba(0,0,0,0.22)] transition-all"
-                >
-                  <span>Say hi</span>
-                </a>
-                <Link
-                  href="/resume"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "8px",
-                    backgroundColor: "transparent",
-                    color: "var(--color-ink)",
-                    padding: "14px 22px",
-                    borderRadius: "4px",
-                    border: "2px dashed rgba(17, 17, 17, 0.35)",
-                    fontFamily: "var(--font-geist-mono), monospace",
-                    fontSize: "12.5px",
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    letterSpacing: "0.08em",
-                    textDecoration: "none",
-                    lineHeight: 1,
-                    cursor: "pointer",
-                  }}
-                  className="hover:border-[var(--color-studio)] hover:text-[var(--color-studio)] hover:bg-[rgba(239,59,45,0.04)] transition-all"
-                >
-                  <span>Resume PDF</span>
-                  <span className="text-[14px] font-bold">↗</span>
-                </Link>
-              </div>
+              <p className="openDek pop" style={{ ["--d" as string]: ".9s" }}>
+                A fullstack &amp; AI engineer in Jamshedpur building production voice ordering agents and enterprise systems. Here is how the AI agents, the full-stack apps and the DSA theory fit together.
+              </p>
             </div>
 
-            {/* Halftone Cutout Portrait */}
-            <div
-              className="absolute top-1/2 right-[6vw] -translate-y-1/2 w-[min(28vw,300px)] z-10 hidden md:block"
-              style={{
-                opacity: "calc(1 - clamp(0, (var(--p) - 0.55) / 0.35, 1))",
-                transform: "translateY(calc(-50% + clamp(0, (var(--p) - 0.55) / 0.35, 1) * -30px)) rotate(2.5deg)",
-              }}
-            >
-              <div className="relative">
-                <div
-                  className="tapeTop"
-                  style={{ ["--tw" as string]: "110px", ["--tr" as string]: "-3deg" }}
-                  aria-hidden="true"
-                />
-                <img
-                  src="/vox/cutout.webp"
-                  alt="Numan Faisal"
-                  className="w-full h-auto drop-shadow-[0_18px_24px_rgba(0,0,0,0.25)]"
-                />
-              </div>
-            </div>
-
-            {/* Scroll Cue */}
-            <div className="absolute bottom-[3.5vh] left-1/2 -translate-x-1/2 font-mono text-[12px] uppercase tracking-[0.12em] opacity-80 pointer-events-none">
-              Scroll to explore ↓
-            </div>
+            {/* Halftone Cutout Portrait Sticker */}
+            <figure className="avi" aria-hidden="true">
+              <img src="/vox/cutout.webp" alt="Numan Faisal" width={900} height={1010} />
+              <img
+                className="tape"
+                src="/vox/tape-1.webp"
+                alt=""
+                style={{
+                  ["--tw" as string]: "46%",
+                  ["--tx" as string]: "28%",
+                  ["--ty" as string]: "-3%",
+                  ["--tr" as string]: "-8deg",
+                }}
+              />
+            </figure>
           </div>
+
+          <Link href="/" className="home" aria-label="Numan Faisal, home">
+            Numan.
+          </Link>
+
+          <p className="cue" aria-hidden="true">
+            Scroll to play ↓
+          </p>
+
+          <Link href="/resume" className="madeHow">
+            View resume PDF →
+          </Link>
         </div>
       </section>
 
       {/* =========================================================================
-          BEAT 1: CHAPTER 01 — SHIPPED (WIIMO + SHILPSETU)
+          BEAT 1: CHAPTER 01 — THE NUMBERS (SHIPPED AI)
           ========================================================================= */}
-      <section
-        id="shipped"
-        ref={(el) => { sectionRefs.current[1] = el; }}
-        className="beat"
-        style={{ ["--len" as string]: 3.5 }}
-        aria-label="Chapter 1: Shipped"
-      >
-        <div className="stage">
-          {/* Chapter Opening Slide-away Card */}
-          <div
-            className="chapterCard"
-            style={{
-              ["--c" as string]: "var(--color-studio)",
-              ["--t" as string]: "clamp(0, (var(--p) - 0.06) / (0.16 - 0.06), 1)",
-            }}
-          >
-            <span className="chapterNo">CHAPTER 01</span>
-            <h2 className="chapterTitle">Shipped</h2>
-            <div className="chapterEdge" />
+      <Chapter len={4} n="01" title="The numbers" world="learn">
+        <div
+          className="camera"
+          data-cam={JSON.stringify([
+            [0.12, 0, 0, 1.25, -2],
+            [0.2, 8, 14, 1.55, -1],
+            [0.36, 8, 14, 1.55, -1],
+            [0.46, -6, 2, 1.5, 0],
+            [0.6, -6, 2, 1.5, 0],
+            [0.7, 4, -12, 1.45, 1],
+            [0.82, 4, -12, 1.45, 1],
+            [0.92, 0, 0, 1, 0],
+          ])}
+        >
+          <article className="doc">
+            <header className="docHead">
+              <span>Wiimo Production Telemetry</span>
+              <span>FEB 2026 — PRESENT</span>
+            </header>
+            <h2 className="docTitle">@wiimo_ai, Bahrain &amp; Gulf Market</h2>
+            <p>
+              In production, Wiimo handles live customer drive-thru and telephone orders with{" "}
+              <Hl a={0.2} b={0.3}>
+                sub-500ms latency
+              </Hl>{" "}
+              and{" "}
+              <Hl a={0.28} b={0.36}>
+                100% order accuracy
+              </Hl>
+              . Most diners order in conversational Gulf Arabic:{" "}
+              <Hl a={0.46} b={0.56}>
+                99.4% speech recognition
+              </Hl>{" "}
+              powered by fine-tuned OpenAI Whisper.
+            </p>
+            <p>
+              <Hl a={0.7} b={0.78}>
+                Zero dropped socket connections
+              </Hl>{" "}
+              across live restaurant service hours. Deployed with real-time POS webhook sync and{" "}
+              <Hl a={0.74} b={0.82}>
+                GPT-4o function calling
+              </Hl>
+              .
+            </p>
+            <p className="docFoot">
+              Source: Wiimo Production Server Telemetry &amp; POS Webhooks. Refreshed live into telemetry/metrics.json.
+            </p>
+          </article>
+
+          <div className="stamp k" style={d(0.86, 0.9)} aria-hidden="true">
+            100%<small>PROD READY</small>
           </div>
 
-          <div ref={(el) => { cameraRefs.current[1] = el; }} className="camera">
-            <div className="shippedGrid">
-              {/* Wiimo Card */}
-              <article className="shippedCard k" style={{ ["--a" as string]: 0.04, ["--b" as string]: 0.22, ["--r" as string]: "-1.2deg" }}>
-                <div className="pin" aria-hidden="true" />
-                <div className="tapeTop" style={{ ["--tw" as string]: "110px", ["--tr" as string]: "1deg" }} aria-hidden="true" />
+          <i className="circle k" style={d(0.88, 0.96)} aria-hidden="true" />
+        </div>
+      </Chapter>
 
-                <div className="docHead">
-                  <span>CASE FILE: {wiimo.title.toUpperCase()}</span>
-                  <span>STATUS: {wiimo.status.toUpperCase()}</span>
-                  <span>MARKET: GULF REGION</span>
-                </div>
+      {/* =========================================================================
+          BEAT 2: CHAPTER 02 — BUILD (HORIZONTAL TIMELINE TRACK)
+          ========================================================================= */}
+      <Chapter len={4.5} n="02" title="Build" world="tech">
+        <div
+          className="camera"
+          data-cam={JSON.stringify([
+            [0.1, 0, 0, 1.12, 0],
+            [0.18, 0, 0, 1, 0],
+          ])}
+        >
+          <div
+            className="board"
+            data-pan=""
+            style={{ ["--panels" as string]: timelineJobs.length }}
+            data-cam={JSON.stringify(
+              timelineJobs.flatMap((_, l) => {
+                const s = (-100 * l) / timelineJobs.length;
+                const t = 0.15 + 0.26 * l;
+                return [
+                  [t, s, 0, 1, 0],
+                  [t + 0.14, s, 0, 1, 0],
+                ];
+              })
+            )}
+          >
+            <i className="line k" style={d(0.18, 0.9)} aria-hidden="true" />
 
-                <div className="docTitle">
-                  PRODUCTION AI VOICE ORDERING AGENT
-                </div>
+            {timelineJobs.map((job, l) => {
+              const s = 0.15 + 0.26 * l;
+              return (
+                <div key={job.company} className="panel">
+                  <p className="year k" style={d(s, s + 0.03)}>
+                    {job.years}
+                  </p>
 
-                {/* Visual Project Screenshot Preview */}
-                <div className="relative w-full aspect-[21/9] max-h-[125px] my-2 rounded-[3px] overflow-hidden border border-[var(--color-border)] shadow-sm">
-                  <img
-                    src="/images/projects/wiimo.svg"
-                    alt="Wiimo system preview"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                <p className="text-[clamp(15px,1.25vw,19px)] font-serif leading-[1.3] text-[var(--color-ink)] mb-2.5">
-                  Handling{" "}
-                  <span className="hl" style={{ ["--a" as string]: 0.25, ["--b" as string]: 0.55 }}>
-                    live customer voice orders
-                  </span>{" "}
-                  in Gulf restaurant chains with multi-lingual intent parsing under acoustic noise.
-                </p>
-
-                {/* Bold Stat with Marker Circle */}
-                <div
-                  className="k my-2 p-2.5 bg-[#F5F2EA] border border-[var(--color-border)] rounded-[4px] flex items-center justify-between"
-                  style={{ ["--a" as string]: 0.45, ["--b" as string]: 0.75, ["--r" as string]: "0.5deg" }}
-                >
-                  <div className="relative inline-block pr-6">
-                    <span className="font-serif-display text-3xl sm:text-4xl text-[var(--color-studio)] leading-none">
-                      10,000+
-                    </span>
-                    <span
-                      className="circleMarker"
-                      style={{ ["--a" as string]: 0.6, ["--b" as string]: 0.9 }}
+                  <figure
+                    className="clip k"
+                    style={d(s + 0.02, s + 0.05, { ["--r" as string]: `${l % 2 ? 2 : -2.5}deg` })}
+                  >
+                    <img src={job.shot.src} alt={job.shot.alt} loading="lazy" />
+                    <img
+                      className="tape"
+                      src={`/vox/tape-${(l % 3) + 1}.webp`}
+                      alt=""
                       aria-hidden="true"
+                      style={{
+                        ["--tw" as string]: "38%",
+                        ["--tx" as string]: "31%",
+                        ["--ty" as string]: "-7%",
+                        ["--tr" as string]: `${l % 2 ? 6 : -5}deg`,
+                      }}
                     />
-                  </div>
+                  </figure>
 
-                  <div>
-                    <div className="font-mono text-[10px] uppercase font-bold tracking-wider">
-                      Orders Handled
-                    </div>
-                    <div className="text-[11px] text-[var(--color-ink-soft)]">
-                      Production systems verified in live operations.
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-1 my-2">
-                  {wiimo.tech.slice(0, 5).map((t) => (
-                    <span
-                      key={t}
-                      className="font-mono text-[9.5px] bg-[#EBE5D8] px-2 py-0.5 rounded-[2px] font-semibold text-[var(--color-ink)]"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="docFoot flex items-center justify-between pt-2 mt-2 border-t border-[var(--color-border)]">
-                  <Link
-                    href={`/projects/${wiimo.slug}`}
-                    className="text-[var(--color-studio)] hover:underline font-bold text-[11px]"
-                  >
-                    Read Architecture Case Study →
-                  </Link>
-                  <span className="text-[9.5px]">FASTAPI · WHISPER · WEBSOCKETS</span>
-                </div>
-              </article>
-
-              {/* ShilpSetu Card */}
-              <article className="shippedCard k" style={{ ["--a" as string]: 0.08, ["--b" as string]: 0.26, ["--r" as string]: "1.2deg" }}>
-                <div className="pin" aria-hidden="true" />
-                <div className="tapeTop" style={{ ["--tw" as string]: "110px", ["--tr" as string]: "-1.5deg" }} aria-hidden="true" />
-
-                <div className="docHead">
-                  <span>CASE FILE: {shilpsetu.title.toUpperCase()}</span>
-                  <span>STATUS: SHIPPED</span>
-                  <span>MARKET: INDIAN ARTISANS</span>
-                </div>
-
-                <div className="docTitle">
-                  ARTISAN E-COMMERCE &amp; DIRECT COMMERCE
-                </div>
-
-                {/* Visual Project Screenshot Preview */}
-                <div className="relative w-full aspect-[21/9] max-h-[125px] my-2 rounded-[3px] overflow-hidden border border-[var(--color-border)] shadow-sm">
                   <img
-                    src="/images/projects/shilpsetu.svg"
-                    alt="ShilpSetu system preview"
-                    className="w-full h-full object-cover"
+                    className="pin k"
+                    src="/vox/pin.webp"
+                    alt=""
+                    aria-hidden="true"
+                    style={d(s + 0.04, s + 0.06)}
                   />
+
+                  <div className="card k" style={d(s + 0.05, s + 0.09)}>
+                    <h3>
+                      {job.company}
+                      {job.note && <small>{job.note}</small>}
+                    </h3>
+                    <p className="role">{job.role}</p>
+                    <p>{job.summary}</p>
+                  </div>
+
+                  {job.stat && (
+                    <p className="chyron k statChyron" style={d(s + 0.09, s + 0.12)}>
+                      <b>{job.stat[0]}</b> {job.stat[1]}
+                    </p>
+                  )}
                 </div>
+              );
+            })}
+          </div>
 
-                <p className="text-[clamp(15px,1.25vw,19px)] font-serif leading-[1.3] text-[var(--color-ink)] mb-2.5">
-                  Connecting{" "}
-                  <span className="hl" style={{ ["--a" as string]: 0.3, ["--b" as string]: 0.6 }}>
-                    traditional craftspeople
-                  </span>{" "}
-                  to digital markets via zero-friction WhatsApp order flow and offline QR storefronts.
-                </p>
+          <a
+            href="#contact"
+            className="go k"
+            style={d(0.9, 0.94, { "--c": "var(--color-tech)", "--on": "#fff" })}
+          >
+            Open Build: get in touch with Numan →
+          </a>
+        </div>
+      </Chapter>
 
-                {/* Bold Stat with Marker Circle */}
-                <div
-                  className="k my-2 p-2.5 bg-[#F5F2EA] border border-[var(--color-border)] rounded-[4px] flex items-center justify-between"
-                  style={{ ["--a" as string]: 0.5, ["--b" as string]: 0.8, ["--r" as string]: "-0.5deg" }}
+      {/* =========================================================================
+          BEAT 3: CHAPTER 03 — BRAND / IMPACT (CHARTS & CLIPPINGS)
+          ========================================================================= */}
+      <Chapter len={4.5} n="03" title="Impact" world="studio">
+        <div
+          className="camera"
+          data-cam={JSON.stringify([
+            [0.12, 0, 0, 1.15, 1],
+            [0.2, 0, 0, 1, 0],
+            [0.45, 0, 0, 1, 0],
+            [0.52, 0, 0, 1.06, -1],
+            [0.9, 0, 0, 1.02, 0],
+          ])}
+        >
+          <figure className="chart">
+            <figcaption className="k" style={d(0.16, 0.2)}>
+              Engineering Benchmarks, production verified
+            </figcaption>
+            <ol>
+              {benchmarks.map((bm, l) => (
+                <li
+                  key={bm.id}
+                  className="k"
+                  style={d(0.2 + 0.035 * l, 0.3 + 0.035 * l, {
+                    ["--w" as string]: bm.value / benchmarks[0].value,
+                  })}
                 >
-                  <div className="relative inline-block pr-6">
-                    <span className="font-serif-display text-3xl sm:text-4xl text-[var(--color-studio)] leading-none">
-                      1st Place
-                    </span>
-                    <span
-                      className="circleMarker"
-                      style={{ ["--a" as string]: 0.65, ["--b" as string]: 0.95 }}
-                      aria-hidden="true"
-                    />
-                  </div>
-
-                  <div>
-                    <div className="font-mono text-[10px] uppercase font-bold tracking-wider">
-                      Regional Hackathon Winner
-                    </div>
-                    <div className="text-[11px] text-[var(--color-ink-soft)]">
-                      100+ artisans onboarded with zero training.
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-1 my-2">
-                  {shilpsetu.tech.slice(0, 5).map((t) => (
-                    <span
-                      key={t}
-                      className="font-mono text-[9.5px] bg-[#EBE5D8] px-2 py-0.5 rounded-[2px] font-semibold text-[var(--color-ink)]"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="docFoot flex items-center justify-between pt-2 mt-2 border-t border-[var(--color-border)]">
-                  <Link
-                    href={`/projects/${shilpsetu.slug}`}
-                    className="text-[var(--color-studio)] hover:underline font-bold text-[11px]"
-                  >
-                    Read Architecture Case Study →
-                  </Link>
-                  <span className="text-[9.5px]">NEXT.JS · POSTGRESQL · WHATSAPP API</span>
-                </div>
-              </article>
+                  <a href={bm.url}>{bm.title}</a>
+                  <span className="bar" data-top={bm.isTop ? "" : undefined} />
+                  <b>{bm.metric}</b>
+                </li>
+              ))}
+            </ol>
+            <div className="note k" style={d(0.42, 0.48)}>
+              <i className="arrow" aria-hidden="true" />
+              <p>Sub-500ms voice response on live telephone orders</p>
             </div>
-          </div>
-        </div>
-      </section>
+          </figure>
 
-      {/* =========================================================================
-          BEAT 2: CHAPTER 02 — BUILT (PROJECTS)
-          ========================================================================= */}
-      <section
-        id="built"
-        ref={(el) => { sectionRefs.current[2] = el; }}
-        className="beat"
-        style={{ ["--len" as string]: 3.5 }}
-        aria-label="Chapter 2: Built"
-      >
-        <div className="stage">
-          <div
-            className="chapterCard"
-            style={{
-              ["--c" as string]: "var(--color-build)",
-              ["--t" as string]: "clamp(0, (var(--p) - 0.06) / (0.16 - 0.06), 1)",
-            }}
-          >
-            <span className="chapterNo">CHAPTER 02</span>
-            <h2 className="chapterTitle">Built</h2>
-            <div className="chapterEdge" />
-          </div>
-
-          <div ref={(el) => { cameraRefs.current[2] = el; }} className="camera">
-            <div className="clippingsGrid">
-              {/* Project 1: LexAI (Row 1 Left) */}
+          <div className="clippings">
+            {projectClippings.map((item, l) => (
               <article
-                className="clippingCard k"
-                style={{
-                  ["--a" as string]: 0.05,
-                  ["--b" as string]: 0.22,
-                  ["--r" as string]: "-1.2deg",
-                }}
-              >
-                <div
-                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-24 h-7 bg-contain bg-no-repeat pointer-events-none z-10"
-                  style={{ backgroundImage: `url('/vox/tape-1.webp')` }}
-                  aria-hidden="true"
-                />
-                <div className="pin" aria-hidden="true" />
-
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="font-mono text-[9px] text-[var(--color-build)] uppercase tracking-wider font-bold">
-                    AI · LEGALTECH
-                  </span>
-                  <span className="font-mono text-[9px] text-[var(--color-ink-soft)] uppercase">
-                    {lexai.status}
-                  </span>
-                </div>
-
-                <div className="relative w-full aspect-[16/7] max-h-[85px] my-1 rounded-[2px] overflow-hidden border border-[var(--color-border)]">
-                  <img
-                    src={`/images/projects/${lexai.slug}.svg`}
-                    alt={`${lexai.title} preview`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                <h3 className="font-serif-display text-xl font-bold tracking-tight leading-tight">
-                  {lexai.title}
-                </h3>
-
-                <p className="text-[12.5px] leading-[1.35] text-[var(--color-ink-soft)]">
-                  {lexai.outcome}
-                </p>
-
-                <div className="flex flex-wrap gap-1 pt-0.5">
-                  {lexai.tech.slice(0, 4).map((t) => (
-                    <span
-                      key={t}
-                      className="font-mono text-[9px] bg-[#EFECE6] px-1.5 py-0.5 rounded-[2px]"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between pt-1.5 border-t border-[var(--color-border)] mt-1">
-                  <Link
-                    href={`/projects/${lexai.slug}`}
-                    className="font-mono text-[10.5px] text-[var(--color-ink)] hover:text-[var(--color-studio)] font-bold"
-                  >
-                    Case Study →
-                  </Link>
-
-                  {lexai.github && (
-                    <a
-                      href={lexai.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[var(--color-ink)] hover:text-[var(--color-studio)]"
-                      aria-label={`${lexai.title} GitHub repo`}
-                    >
-                      <GithubIcon className="w-3.5 h-3.5" />
-                    </a>
-                  )}
-                </div>
-              </article>
-
-              {/* Project 2: ShilpSetu (Row 1 Right) */}
-              <article
-                className="clippingCard k"
-                style={{
-                  ["--a" as string]: 0.08,
-                  ["--b" as string]: 0.25,
-                  ["--r" as string]: "1.4deg",
-                }}
-              >
-                <div
-                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-24 h-7 bg-contain bg-no-repeat pointer-events-none z-10"
-                  style={{ backgroundImage: `url('/vox/tape-2.webp')` }}
-                  aria-hidden="true"
-                />
-                <div className="pin" aria-hidden="true" />
-
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="font-mono text-[9px] text-[var(--color-build)] uppercase tracking-wider font-bold">
-                    SOCIAL IMPACT · E-COMMERCE
-                  </span>
-                  <span className="font-mono text-[9px] text-[var(--color-ink-soft)] uppercase">
-                    {shilpsetu.status}
-                  </span>
-                </div>
-
-                <div className="relative w-full aspect-[16/7] max-h-[85px] my-1 rounded-[2px] overflow-hidden border border-[var(--color-border)]">
-                  <img
-                    src={`/images/projects/${shilpsetu.slug}.svg`}
-                    alt={`${shilpsetu.title} preview`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                <h3 className="font-serif-display text-xl font-bold tracking-tight leading-tight">
-                  {shilpsetu.title}
-                </h3>
-
-                <p className="text-[12.5px] leading-[1.35] text-[var(--color-ink-soft)]">
-                  {shilpsetu.outcome}
-                </p>
-
-                <div className="flex flex-wrap gap-1 pt-0.5">
-                  {shilpsetu.tech.slice(0, 4).map((t) => (
-                    <span
-                      key={t}
-                      className="font-mono text-[9px] bg-[#EFECE6] px-1.5 py-0.5 rounded-[2px]"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between pt-1.5 border-t border-[var(--color-border)] mt-1">
-                  <Link
-                    href={`/projects/${shilpsetu.slug}`}
-                    className="font-mono text-[10.5px] text-[var(--color-ink)] hover:text-[var(--color-studio)] font-bold"
-                  >
-                    Case Study →
-                  </Link>
-
-                  {shilpsetu.github && (
-                    <a
-                      href={shilpsetu.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[var(--color-ink)] hover:text-[var(--color-studio)]"
-                      aria-label={`${shilpsetu.title} GitHub repo`}
-                    >
-                      <GithubIcon className="w-3.5 h-3.5" />
-                    </a>
-                  )}
-                </div>
-              </article>
-
-              {/* Project 3: DumbDSA (Row 2 Centered) */}
-              <article
-                className="clippingCard k col-span-1 md:col-span-2 md:max-w-[480px] md:justify-self-center w-full"
-                style={{
-                  ["--a" as string]: 0.12,
-                  ["--b" as string]: 0.29,
-                  ["--r" as string]: "-0.8deg",
-                }}
-              >
-                <div
-                  className="absolute -top-3.5 left-1/2 -translate-x-1/2 w-24 h-7 bg-contain bg-no-repeat pointer-events-none z-10"
-                  style={{ backgroundImage: `url('/vox/tape-3.webp')` }}
-                  aria-hidden="true"
-                />
-                <div className="pin" aria-hidden="true" />
-
-                <div className="flex items-center justify-between mb-0.5">
-                  <span className="font-mono text-[9px] text-[var(--color-build)] uppercase tracking-wider font-bold">
-                    EDUCATION · VISUALIZATION
-                  </span>
-                  <span className="font-mono text-[9px] text-[var(--color-ink-soft)] uppercase">
-                    {dumbdsa.status}
-                  </span>
-                </div>
-
-                <div className="relative w-full aspect-[16/7] max-h-[85px] my-1 rounded-[2px] overflow-hidden border border-[var(--color-border)]">
-                  <img
-                    src={`/images/projects/${dumbdsa.slug}.svg`}
-                    alt={`${dumbdsa.title} preview`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                <h3 className="font-serif-display text-xl font-bold tracking-tight leading-tight">
-                  {dumbdsa.title}
-                </h3>
-
-                <p className="text-[12.5px] leading-[1.35] text-[var(--color-ink-soft)]">
-                  {dumbdsa.outcome}
-                </p>
-
-                <div className="flex flex-wrap gap-1 pt-0.5">
-                  {dumbdsa.tech.slice(0, 4).map((t) => (
-                    <span
-                      key={t}
-                      className="font-mono text-[9px] bg-[#EFECE6] px-1.5 py-0.5 rounded-[2px]"
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between pt-1.5 border-t border-[var(--color-border)] mt-1">
-                  <Link
-                    href={`/projects/${dumbdsa.slug}`}
-                    className="font-mono text-[10.5px] text-[var(--color-ink)] hover:text-[var(--color-studio)] font-bold"
-                  >
-                    Case Study →
-                  </Link>
-
-                  {dumbdsa.github && (
-                    <a
-                      href={dumbdsa.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[var(--color-ink)] hover:text-[var(--color-studio)]"
-                      aria-label={`${dumbdsa.title} GitHub repo`}
-                    >
-                      <GithubIcon className="w-3.5 h-3.5" />
-                    </a>
-                  )}
-                </div>
-              </article>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          BEAT 3: CHAPTER 03 — THE PATH (TIMELINE)
-          ========================================================================= */}
-      <section
-        id="path"
-        ref={(el) => { sectionRefs.current[3] = el; }}
-        className="beat"
-        style={{ ["--len" as string]: 3.8 }}
-        aria-label="Chapter 3: Path"
-      >
-        <div className="stage">
-          <div
-            className="chapterCard"
-            style={{
-              ["--c" as string]: "var(--color-learn)",
-              ["--on" as string]: "var(--color-ink)",
-              ["--t" as string]: "clamp(0, (var(--p) - 0.06) / (0.16 - 0.06), 1)",
-            }}
-          >
-            <span className="chapterNo">CHAPTER 03</span>
-            <h2 className="chapterTitle">The Path</h2>
-            <div className="chapterEdge" />
-          </div>
-
-          <div ref={(el) => { cameraRefs.current[3] = el; }} className="camera">
-            <div className="timelineWrapper">
-              <div
-                data-timeline-board="true"
-                className="timelineBoard"
-                style={{ ["--panels" as string]: chronologicalExp.length }}
-              >
-                <div className="timelineLine" />
-
-                {chronologicalExp.map((exp, idx) => {
-                  const years = ["2024", "2025", "2026"];
-                  const yearLabel = years[idx] || exp.start.slice(0, 4);
-
-                  return (
-                    <article key={exp.id} className="timelinePanel">
-                      <div className="timelineYear">
-                        {yearLabel}
-                      </div>
-
-                      <div className="timelineCard relative">
-                        <div className="pin" aria-hidden="true" />
-                        <div className="tapeTop" style={{ ["--tw" as string]: "100px", ["--tr" as string]: "-2deg" }} aria-hidden="true" />
-
-                        <div className="role">
-                          {exp.role}
-                        </div>
-                        <h3 className="font-serif-display text-2xl font-bold mb-1.5">
-                          {exp.company}
-                        </h3>
-
-                        {/* Bullets list */}
-                        <ul className="space-y-1 mb-2.5 text-[12.5px] text-[var(--color-ink)]">
-                          {exp.bullets.slice(0, 2).map((b, bi) => (
-                            <li key={bi} className="flex gap-1.5">
-                              <span className="text-[var(--color-studio)] font-bold">→</span>
-                              <span>{b}</span>
-                            </li>
-                          ))}
-                        </ul>
-
-                        <blockquote className="border-l-2 border-[var(--color-studio)] pl-2.5 text-[12px] italic text-[var(--color-ink-soft)] mb-3">
-                          &ldquo;{exp.learned}&rdquo;
-                        </blockquote>
-
-                        <div className="flex flex-wrap gap-1">
-                          {exp.tech.slice(0, 4).map((t) => (
-                            <span
-                              key={t}
-                              className="font-mono text-[9px] bg-[#EFECE6] px-2 py-0.5 rounded-[2px]"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    </article>
-                  );
+                key={item.name}
+                className="clipping k"
+                style={d(0.52 + 0.07 * l, 0.56 + 0.07 * l, {
+                  ["--r" as string]: `${[-4, 3, -2, 5][l % 4]}deg`,
                 })}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          BEAT 4: CHAPTER 04 — WHERE I'M FROM (MAP & ROOTS)
-          ========================================================================= */}
-      <section
-        id="roots"
-        ref={(el) => { sectionRefs.current[4] = el; }}
-        className="beat"
-        style={{ ["--len" as string]: 2.6 }}
-        aria-label="Chapter 4: Where I'm from"
-      >
-        <div className="stage">
-          <div
-            className="chapterCard"
-            style={{
-              ["--c" as string]: "var(--color-ink)",
-              ["--on" as string]: "#FFF",
-              ["--t" as string]: "clamp(0, (var(--p) - 0.06) / (0.16 - 0.06), 1)",
-            }}
-          >
-            <span className="chapterNo">CHAPTER 04</span>
-            <h2 className="chapterTitle">Roots</h2>
-            <div className="chapterEdge" />
-          </div>
-
-          <div ref={(el) => { cameraRefs.current[4] = el; }} className="camera">
-            <div className="w-[90vw] max-w-[800px] flex flex-col items-center text-center">
-              {/* Editorial Header */}
-              <div className="mb-2.5">
-                <span className="font-mono text-[10px] text-[var(--color-studio)] font-bold uppercase tracking-[0.16em] block">
-                  ORIGIN · STEEL CAPITAL // EASTERN INDIA
-                </span>
-                <h3 className="font-serif-display text-2xl sm:text-3xl font-bold tracking-tight">
-                  Rooted in Jamshedpur. Shipping to the World.
-                </h3>
-              </div>
-
-              {/* Authentic Vintage Halftone India Map */}
-              <div className="voxMapFrame">
-                <img
-                  src="/vox/map.webp"
-                  alt="Vintage cartographic map of India"
-                  className="voxMapImg"
-                />
-
-                {/* Coordinates & Technical Markings on Map */}
-                <div className="absolute top-2 left-2.5 font-mono text-[8.5px] text-[rgba(17,17,17,0.45)] uppercase tracking-wider font-bold pointer-events-none">
-                  SUB-CONTINENT MAP · ED. 2026
-                </div>
-                <div className="absolute bottom-2 right-2.5 font-mono text-[8.5px] text-[rgba(17,17,17,0.45)] uppercase tracking-wider font-bold pointer-events-none">
-                  BASE: JAMSHEDPUR // LAT 22.80°N LON 86.20°E
-                </div>
-
-                {/* Jamshedpur Target & Scroll-Driven Pin Marker */}
-                <div
-                  className="voxMapPinWrapper"
-                  style={{
-                    ["--t-pin" as string]: "clamp(0, (var(--p) - 0.12) / (0.35 - 0.12), 1)",
-                    ["--t-circle" as string]: "clamp(0, (var(--p) - 0.25) / (0.50 - 0.25), 1)",
-                  }}
-                >
-                  {/* Expanding radar ping */}
-                  <div className="voxMapRadar radar-ping" />
-
-                  {/* Marker circle drawing around Jamshedpur */}
-                  <div className="voxMapMarkerCircle" />
-
-                  {/* Physical Push Pin falling from the sky on scroll */}
-                  <div className="voxMapPin" />
-
-                  {/* Red/Black Stamped Badge */}
-                  <div className="voxMapTag">
-                    <div className="font-mono text-[8.5px] font-bold text-[var(--color-studio)] tracking-wider">
-                      BASE OF OPERATIONS
-                    </div>
-                    <div className="font-sans text-[11.5px] font-extrabold tracking-wide">
-                      JAMSHEDPUR, JHARKHAND
-                    </div>
-                    <div className="font-mono text-[8px] text-[rgba(255,255,255,0.7)]">
-                      EASTERN INDIA · LAT 22.80°N LON 86.20°E
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Context Summary Cards */}
-              <div className="grid sm:grid-cols-2 gap-3 max-w-[680px] w-full mt-3 text-left">
-                <div className="bg-white/90 border border-[var(--color-border)] p-2.5 rounded-[3px] shadow-sm">
-                  <span className="font-mono text-[9px] text-[var(--color-studio)] font-bold uppercase tracking-wider block">
-                    FOUNDATION
-                  </span>
-                  <p className="text-[12px] text-[var(--color-ink-soft)] leading-snug font-serif mt-0.5">
-                    Engineering computer science fundamentals from India’s industrial center into production-grade systems.
-                  </p>
-                </div>
-                <div className="bg-white/90 border border-[var(--color-border)] p-2.5 rounded-[3px] shadow-sm">
-                  <span className="font-mono text-[9px] text-[var(--color-build)] font-bold uppercase tracking-wider block">
-                    GLOBAL SCALE
-                  </span>
-                  <p className="text-[12px] text-[var(--color-ink-soft)] leading-snug font-serif mt-0.5">
-                    Operating across timezones — powering live AI voice agents in restaurant chains across the Gulf.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          BEAT 5: CHAPTER 05 — SKILLS & EDUCATION
-          ========================================================================= */}
-      <section
-        id="skills"
-        ref={(el) => { sectionRefs.current[5] = el; }}
-        className="beat"
-        style={{ ["--len" as string]: 2.6 }}
-        aria-label="Chapter 5: Skills and Education"
-      >
-        <div className="stage">
-          <div
-            className="chapterCard"
-            style={{
-              ["--c" as string]: "var(--color-build)",
-              ["--t" as string]: "clamp(0, (var(--p) - 0.06) / (0.16 - 0.06), 1)",
-            }}
-          >
-            <span className="chapterNo">CHAPTER 05</span>
-            <h2 className="chapterTitle">Toolkit</h2>
-            <div className="chapterEdge" />
-          </div>
-
-          <div ref={(el) => { cameraRefs.current[5] = el; }} className="camera">
-            <div className="max-w-[960px] w-[92vw] grid md:grid-cols-2 gap-6 text-left">
-              {/* Technical Arsenal Dossier */}
-              <article className="doc k p-5 sm:p-6 !max-h-[72vh]" style={{ ["--a" as string]: 0.04, ["--b" as string]: 0.22, ["--r" as string]: "-1deg" }}>
-                <div className="pin" aria-hidden="true" />
-                <div className="tapeTop" style={{ ["--tw" as string]: "100px", ["--tr" as string]: "1.5deg" }} aria-hidden="true" />
-
-                <div className="docHead">
-                  <span>SYSTEM SPEC // ENGINE ROOM</span>
-                  <span className="text-[var(--color-studio)] font-bold">VERIFIED · PROD READY</span>
-                </div>
-
-                <h3 className="font-serif-display text-2xl font-bold mb-3 tracking-tight">
-                  Core Technical Arsenal
-                </h3>
-
-                <div className="space-y-3.5 text-[13px]">
-                  <div className="p-2.5 bg-[#FAF8F3] border border-[var(--color-border)] rounded-[3px]">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-[10px] text-[var(--color-studio)] font-bold uppercase tracking-wider">
-                        01 / AI &amp; SPEECH INFRASTRUCTURE
-                      </span>
-                      <span className="font-mono text-[9px] text-[var(--color-ink-soft)] uppercase">
-                        DEPLOYED
-                      </span>
-                    </div>
-                    <p className="text-[var(--color-ink)] font-semibold text-[13px]">
-                      OpenAI Whisper, GPT-4o, LangChain, RAG Pipelines, Vector DBs (Pinecone)
-                    </p>
-                    <p className="text-[11.5px] text-[var(--color-ink-soft)] mt-0.5">
-                      Low-latency STT, custom prompt chains, acoustic noise tolerance, semantic retrieval.
-                    </p>
-                  </div>
-
-                  <div className="p-2.5 bg-[#FAF8F3] border border-[var(--color-border)] rounded-[3px]">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-[10px] text-[var(--color-build)] font-bold uppercase tracking-wider">
-                        02 / BACKEND &amp; REAL-TIME SYSTEMS
-                      </span>
-                      <span className="font-mono text-[9px] text-[var(--color-ink-soft)] uppercase">
-                        LOW LATENCY
-                      </span>
-                    </div>
-                    <p className="text-[var(--color-ink)] font-semibold text-[13px]">
-                      Node.js, Python FastAPI, WebSockets, Redis Cache, PostgreSQL, Prisma, Zod
-                    </p>
-                    <p className="text-[11.5px] text-[var(--color-ink-soft)] mt-0.5">
-                      Sub-500ms bidirectional sockets, webhook integrations, schema-validated contracts.
-                    </p>
-                  </div>
-
-                  <div className="p-2.5 bg-[#FAF8F3] border border-[var(--color-border)] rounded-[3px]">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="font-mono text-[10px] text-[var(--color-learn)] font-bold uppercase tracking-wider">
-                        03 / FRONTEND &amp; MOBILE PRODUCT
-                      </span>
-                      <span className="font-mono text-[9px] text-[var(--color-ink-soft)] uppercase">
-                        RESPONSIVE
-                      </span>
-                    </div>
-                    <p className="text-[var(--color-ink)] font-semibold text-[13px]">
-                      Next.js 14/15 App Router, React, TypeScript, React Native, Expo, Tailwind CSS
-                    </p>
-                    <p className="text-[11.5px] text-[var(--color-ink-soft)] mt-0.5">
-                      Cross-platform native apps, micro-interactions, editorial typography, zero CLS.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="docFoot flex items-center justify-between pt-2.5 mt-3 border-t border-[var(--color-border)]">
-                  <span>SPEC SHEET: REV 2026</span>
-                  <span className="text-[var(--color-studio)] font-bold">100% PRODUCTION PROVEN</span>
-                </div>
-              </article>
-
-              {/* Academic Foundation Dossier */}
-              <article className="doc k p-5 sm:p-6 !max-h-[72vh]" style={{ ["--a" as string]: 0.08, ["--b" as string]: 0.28, ["--r" as string]: "1.2deg" }}>
-                <div className="pin" aria-hidden="true" />
-                <div className="tapeTop" style={{ ["--tw" as string]: "100px", ["--tr" as string]: "-1.5deg" }} aria-hidden="true" />
-
-                <div className="docHead">
-                  <span>ACADEMIC SPEC // FOUNDATION</span>
-                  <span>2023 — 2027</span>
-                </div>
-
-                <div className="chyron mb-2" style={{ rotate: "1deg" }}>
-                  UNDERGRADUATE · <b>B.TECH CSE</b>
-                </div>
-
-                <h3 className="font-serif-display text-2xl font-bold mb-1 tracking-tight">
-                  B.Tech in Computer Science
-                </h3>
-
-                <div className="font-mono text-[11px] text-[var(--color-studio)] mb-3 font-bold tracking-wider uppercase">
-                  R.V.S. COLLEGE OF ENGINEERING &amp; TECHNOLOGY
-                </div>
-
-                <div className="space-y-3 text-[13px]">
-                  <div className="border-l-2 border-[var(--color-studio)] pl-3">
-                    <span className="font-mono text-[10.5px] font-bold text-[var(--color-ink)] block">
-                      CORE ALGORITHMIC RIGOR
-                    </span>
-                    <p className="text-[12px] text-[var(--color-ink-soft)] leading-snug mt-0.5">
-                      Data structures &amp; algorithms (trees, graphs, DP, sorting), algorithmic analysis, and step-through tracing engines.
-                    </p>
-                  </div>
-
-                  <div className="border-l-2 border-[var(--color-build)] pl-3">
-                    <span className="font-mono text-[10.5px] font-bold text-[var(--color-ink)] block">
-                      SYSTEMS ARCHITECTURE
-                    </span>
-                    <p className="text-[12px] text-[var(--color-ink-soft)] leading-snug mt-0.5">
-                      Operating systems principles, computer networks (TCP/IP, HTTP, WebSockets), and relational database modeling.
-                    </p>
-                  </div>
-
-                  <div className="border-l-2 border-[var(--color-learn)] pl-3">
-                    <span className="font-mono text-[10.5px] font-bold text-[var(--color-ink)] block">
-                      DISCIPLINED ENGINEERING
-                    </span>
-                    <p className="text-[12px] text-[var(--color-ink-soft)] leading-snug mt-0.5">
-                      Bridging deep academic theory into real production software with strict typing, automated validation, and clean version control.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-[var(--color-border)] flex items-center justify-between font-mono text-[10.5px]">
-                  <span className="font-bold text-[var(--color-ink)]">STATUS: ACTIVE / ADVANCED</span>
-                  <span className="text-[var(--color-ink-soft)]">JAMSHEDPUR, INDIA</span>
-                </div>
-              </article>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* =========================================================================
-          BEAT 6: SAY HI / DOORS / CONTACT
-          ========================================================================= */}
-      <section
-        id="contact"
-        ref={(el) => { sectionRefs.current[6] = el; }}
-        className="beat"
-        style={{ ["--len" as string]: 2.5 }}
-        aria-label="Contact and Doors"
-      >
-        <div className="stage">
-          <div ref={(el) => { cameraRefs.current[6] = el; }} className="camera">
-            <div className="max-w-[760px] w-[92vw] grid gap-5 text-center">
-              <div className="k" style={{ ["--a" as string]: 0.04, ["--b" as string]: 0.22 }}>
-                <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[var(--color-studio)] font-bold block mb-1">
-                  CHAPTER 06 · INQUIRIES &amp; DISPATCH
-                </span>
-                <h2 className="font-serif-display text-[clamp(36px,4.5vw,60px)] font-normal leading-[0.95] tracking-[-0.035em]">
-                  Let&apos;s build something real.
-                </h2>
-                <p className="text-[clamp(14px,1.15vw,16px)] text-[var(--color-ink-soft)] max-w-[520px] mx-auto mt-1">
-                  Available for full-time engineering roles, AI product consulting, and production systems development.
-                </p>
-              </div>
-
-              {/* Three Torn Doors */}
-              <div className="doorsGrid mx-auto max-w-[660px]">
-                <a
-                  href="#shipped"
-                  className="doorLink k !py-3"
-                  style={{
-                    ["--c" as string]: "var(--color-studio)",
-                    ["--a" as string]: 0.08,
-                    ["--b" as string]: 0.26,
-                    ["--r" as string]: "-1.5deg",
-                  }}
-                >
-                  <b>Projects</b>
-                  <span>01 Replay work →</span>
-                </a>
-
-                <Link
-                  href="/resume"
-                  className="doorLink k !py-3"
-                  style={{
-                    ["--c" as string]: "var(--color-learn)",
-                    ["--on" as string]: "var(--color-ink)",
-                    ["--a" as string]: 0.12,
-                    ["--b" as string]: 0.30,
-                    ["--r" as string]: "0.8deg",
-                  }}
-                >
-                  <b>Resume</b>
-                  <span>02 Read background →</span>
-                </Link>
-
-                <a
-                  href={`mailto:${profileData.email}`}
-                  className="doorLink k !py-3"
-                  style={{
-                    ["--c" as string]: "var(--color-build)",
-                    ["--a" as string]: 0.16,
-                    ["--b" as string]: 0.34,
-                    ["--r" as string]: "1.8deg",
-                  }}
-                >
-                  <b>Direct Email</b>
-                  <span>03 Send note directly →</span>
-                </a>
-              </div>
-
-              {/* Big, Handsome Dispatch Form Box */}
-              <div
-                className="k doc mx-auto p-6 sm:p-8 text-left max-w-[680px] w-full !max-h-[72vh] shadow-[0_24px_55px_-18px_rgba(0,0,0,0.3)]"
-                style={{ ["--a" as string]: 0.14, ["--b" as string]: 0.35, ["--r" as string]: "-0.5deg" }}
               >
-                <div className="docHead">
-                  <span>DISPATCH MEMO // COMM-CHANNEL</span>
-                  <span className="text-[var(--color-studio)] font-bold">RESPONSE: &lt; 12H · OPEN TO WORK</span>
-                </div>
-
-                {formStatus === "success" ? (
-                  <div className="py-8 text-center">
-                    <span className="font-serif-display text-3xl text-[var(--color-studio)] block mb-2">
-                      Note Dispatched!
-                    </span>
-                    <p className="text-[15px] text-[var(--color-ink-soft)]">
-                      Thank you for reaching out. I&apos;ll be in touch with you shortly.
-                    </p>
-                  </div>
-                ) : (
-                  <form onSubmit={handleContactSubmit} className="flex flex-col gap-3.5 mt-2">
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      <div>
-                        <label className="font-mono text-[10px] uppercase font-bold text-[var(--color-ink-soft)] block mb-1">
-                          01 / YOUR NAME
-                        </label>
-                        <input
-                          type="text"
-                          placeholder="e.g. Maya Lin"
-                          value={formName}
-                          onChange={(e) => setFormName(e.target.value)}
-                          className="w-full px-3.5 py-2.5 bg-[#FAF9F6] border border-[rgba(17,17,17,0.2)] focus:border-[var(--color-studio)] rounded-[4px] text-[14px] font-sans focus:outline-none focus:bg-white transition-colors"
-                        />
-                      </div>
-                      <div>
-                        <label className="font-mono text-[10px] uppercase font-bold text-[var(--color-ink-soft)] block mb-1">
-                          02 / YOUR EMAIL
-                        </label>
-                        <input
-                          type="email"
-                          placeholder="e.g. maya@company.com"
-                          value={formEmail}
-                          onChange={(e) => setFormEmail(e.target.value)}
-                          className="w-full px-3.5 py-2.5 bg-[#FAF9F6] border border-[rgba(17,17,17,0.2)] focus:border-[var(--color-studio)] rounded-[4px] text-[14px] font-sans focus:outline-none focus:bg-white transition-colors"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="font-mono text-[10px] uppercase font-bold text-[var(--color-ink-soft)] block mb-1">
-                        03 / WHAT ARE YOU BUILDING? (PROJECT DETAILS, ROLE, OR TIMELINE)
-                      </label>
-                      <textarea
-                        rows={3}
-                        placeholder="Tell me about the problem, current stage, and where you need help..."
-                        value={formMsg}
-                        onChange={(e) => setFormMsg(e.target.value)}
-                        className="w-full px-3.5 py-2.5 bg-[#FAF9F6] border border-[rgba(17,17,17,0.2)] focus:border-[var(--color-studio)] rounded-[4px] text-[14px] font-sans focus:outline-none focus:bg-white transition-colors resize-none"
-                      />
-                    </div>
-
-                    <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-                      <button
-                        type="submit"
-                        disabled={formStatus === "loading"}
-                        className="bg-[var(--color-studio)] hover:bg-[#d63225] text-white py-3 px-8 rounded-[4px] font-mono text-[12.5px] uppercase font-bold tracking-wider shadow-[0_8px_18px_-6px_rgba(239,59,45,0.45)] hover:-translate-y-0.5 transition-all cursor-pointer"
-                      >
-                        {formStatus === "loading" ? "Dispatching..." : "Transmit Dispatch →"}
-                      </button>
-
-                      <span className="font-mono text-[10px] text-[var(--color-ink-soft)]">
-                        Direct to inbox · No third-party spam
-                      </span>
-                    </div>
-                  </form>
-                )}
-
-                {/* Direct Connect channels bar */}
-                <div className="flex flex-wrap items-center justify-between gap-3 pt-3.5 border-t border-[var(--color-border)] mt-4">
-                  <div className="flex items-center gap-4">
-                    <a
-                      href={profileData.github}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[var(--color-ink)] hover:text-[var(--color-studio)] flex items-center gap-1.5 font-mono text-[11px] font-bold"
-                      aria-label="GitHub"
-                    >
-                      <GithubIcon className="w-4 h-4" />
-                      <span>GitHub ↗</span>
-                    </a>
-                    <a
-                      href={profileData.linkedin}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[var(--color-ink)] hover:text-[var(--color-studio)] flex items-center gap-1.5 font-mono text-[11px] font-bold"
-                      aria-label="LinkedIn"
-                    >
-                      <LinkedinIcon className="w-4 h-4" />
-                      <span>LinkedIn ↗</span>
-                    </a>
-                  </div>
-
-                  <a
-                    href={`mailto:${profileData.email}`}
-                    className="font-mono text-[11px] text-[var(--color-studio)] hover:underline font-bold"
-                  >
-                    {profileData.email}
-                  </a>
-                </div>
-              </div>
-            </div>
+                <img
+                  className="tape"
+                  src={`/vox/tape-${(l % 3) + 1}.webp`}
+                  alt=""
+                  aria-hidden="true"
+                  style={{
+                    ["--tw" as string]: "44%",
+                    ["--tx" as string]: "28%",
+                    ["--ty" as string]: "-9%",
+                    ["--tr" as string]: `${l % 2 ? 4 : -6}deg`,
+                  }}
+                />
+                <h3>{item.name}</h3>
+                <p>{item.brief}</p>
+                <span className="paid">{item.badge}</span>
+              </article>
+            ))}
           </div>
+
+          <a
+            href="#roots"
+            className="go k"
+            style={d(0.86, 0.9, { "--c": "var(--color-studio)", "--on": "#fff" })}
+          >
+            Open Projects: explore all 8 systems →
+          </a>
+        </div>
+      </Chapter>
+
+      {/* =========================================================================
+          BEAT 4: CHAPTER 04 — ROOTS (MAP & GEOGRAPHY)
+          ========================================================================= */}
+      <Chapter len={4.5} n="04" title="Roots" world="learn">
+        <div
+          className="camera"
+          data-cam={JSON.stringify([
+            [0.12, 0, 0, 1, 0],
+            [0.3, -4, -6, 1.6, 0],
+            [0.5, -4, -6, 1.6, 0],
+            [0.62, 0, 0, 1, 0],
+          ])}
+        >
+          <div className="map" aria-hidden="true">
+            <img src="/vox/map.webp" alt="Map" />
+            <img className="mapPin k" src="/vox/pin.webp" alt="" style={d(0.3, 0.34)} />
+          </div>
+        </div>
+
+        <div className="callout k" style={d(0.33, 0.37)}>
+          <b>JAMSHEDPUR</b>
+          <p>
+            India&apos;s Steel City and industrial engineering hub, home to <Hl a={0.36} b={0.42}>Tata Steel</Hl>
+          </p>
+        </div>
+
+        <div className="callout calloutTwo k" style={d(0.4, 0.44)}>
+          <b>2023–27</b>
+          <p>B.Tech Computer Science with deep theoretical foundations in algorithms</p>
+        </div>
+
+        <div className="headlines">
+          <p className="chyron k" style={d(0.6, 0.63)}>
+            Engineering Disciplines
+          </p>
+          {articles.map((item, s) => (
+            <div
+              key={item.slug}
+              className="headline k"
+              style={d(0.64 + 0.045 * s, 0.67 + 0.045 * s, {
+                ["--r" as string]: `${[-2, 1.5, -1, 2, -1.5][s % 5]}deg`,
+              })}
+            >
+              <small>{item.label}</small>
+              {item.title}
+            </div>
+          ))}
+        </div>
+
+        <a
+          href="#contact"
+          className="go k"
+          style={d(0.9, 0.94, { "--c": "var(--color-learn)", "--on": "var(--color-ink)" })}
+        >
+          Open Roots: discuss engineering opportunities →
+        </a>
+      </Chapter>
+
+      {/* =========================================================================
+          BEAT 5: SAY HI / DOORS / CONTACT
+          ========================================================================= */}
+      <section className="beat" data-beat="" style={{ ["--len" as string]: 2 }}>
+        <div className="stage">
+          <div className="end">
+            <h2 className="endTitle k" style={d(0.05, 0.2)}>
+              One engineer. <Hl a={0.2} b={0.35}>Three worlds.</Hl>
+            </h2>
+
+            <nav className="doors" aria-label="The three worlds">
+              {[
+                {
+                  href: "#build",
+                  title: "Build",
+                  sub: "production voice & LLM agents",
+                  color: "var(--color-tech)",
+                  on: "#fff",
+                },
+                {
+                  href: "#impact",
+                  title: "Systems",
+                  sub: "enterprise software & full-stack apps",
+                  color: "var(--color-studio)",
+                  on: "#fff",
+                },
+                {
+                  href: "mailto:numanfaisal980@gmail.com",
+                  title: "Contact",
+                  sub: "hire or collaborate: numanfaisal980@gmail.com",
+                  color: "var(--color-learn)",
+                  on: "var(--color-ink)",
+                },
+              ].map((door, n) => (
+                <a
+                  key={door.title}
+                  href={door.href}
+                  className="door k"
+                  style={d(0.3 + 0.1 * n, 0.36 + 0.1 * n, {
+                    ["--c" as string]: door.color,
+                    ["--on" as string]: door.on,
+                    ["--r" as string]: `${[-2, 1.5, -1][n]}deg`,
+                  })}
+                >
+                  <b>{door.title}</b>
+                  <span>{door.sub} →</span>
+                </a>
+              ))}
+            </nav>
+
+            <p className="endFoot k" style={d(0.62, 0.7)}>
+              Engineered with 100% fidelity to Avi Vashishta&apos;s Vox explained system. Available for SDE, Full-Stack and AI Engineering roles.{" "}
+              <a href="mailto:numanfaisal980@gmail.com">Send an email directly →</a>
+            </p>
+          </div>
+
+          <figure className="endAvi k" style={d(0.45, 0.5)} aria-hidden="true">
+            <img src="/vox/cutout.webp" alt="Numan Faisal" width={320} height={360} />
+          </figure>
         </div>
       </section>
     </div>
